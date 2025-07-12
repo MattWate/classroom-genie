@@ -314,6 +314,20 @@
                 const result = await response.json();
                 const jsonText = result.candidates[0].content.parts[0].text;
                 const parsedResult = JSON.parse(jsonText);
+
+                // Flexible parsing logic for the report
+                let narrativeReport = "No narrative report could be generated.";
+                let marksAnalysis = "No marks analysis could be generated.";
+
+                for (const key in parsedResult) {
+                    const lowerKey = key.toLowerCase();
+                    if (lowerKey.includes('narrative')) {
+                        narrativeReport = parsedResult[key];
+                    }
+                    if (lowerKey.includes('marks')) {
+                        marksAnalysis = parsedResult[key];
+                    }
+                }
                 
                 outputEl.innerHTML = `
                     <div class="bg-gray-50/50 p-6 rounded-lg">
@@ -323,8 +337,8 @@
                         </div>
                         <div id="printable-report" class="space-y-6">
                             <h1 class="text-3xl font-bold text-center hidden print-only-title">School Report for ${studentName}</h1>
-                            ${createSection('message-square', 'purple', 'Narrative Report', parsedResult.narrative_report)}
-                            ${createSection('bar-chart-2', 'teal', 'Marks Analysis', parsedResult.marks_analysis)}
+                            ${createSection('message-square', 'purple', 'Narrative Report', narrativeReport)}
+                            ${createSection('bar-chart-2', 'teal', 'Marks Analysis', marksAnalysis)}
                         </div>
                     </div>`;
                 lucide.createIcons();
@@ -342,12 +356,23 @@
 
         // --- UTILITY FUNCTIONS ---
         function parseLessonPlan(text) {
-            const clean = (t) => t.replace(/\*\*|##|\*/g, '').trim();
+            // This function uses a flexible regex to find content between headings.
+            const getSection = (heading) => {
+                // This regex looks for ##, optional whitespace, the heading text, more optional whitespace, and a newline.
+                // It's case-insensitive ('i') to handle variations.
+                const regex = new RegExp(`##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+                const match = text.match(regex);
+                // Clean the result of markdown characters.
+                const content = match ? match[1] : '';
+                return content ? content.replace(/\*\*|##|\*/g, '').trim() : '';
+            };
+
             return {
-                introduction: clean(text.match(/## Introduction\n([\s\S]*?)(?=\n## |$)/)?.[1] || ''),
-                mainActivities: clean(text.match(/## Main Activities\n([\s\S]*?)(?=\n## |$)/)?.[1] || ''),
-                plenary: clean(text.match(/## Plenary\n([\s\S]*?)(?=\n## |$)/)?.[1] || ''),
-                resources: clean(text.match(/## Resources\n([\s\S]*?)(?=\n## |$)/)?.[1] || ''),
+                introduction: getSection('Introduction'),
+                mainActivities: getSection('Main Activities'),
+                // Handle cases where the AI might use a different heading for Plenary
+                plenary: getSection('Plenary') || getSection('Plenary / Conclusion'),
+                resources: getSection('Resources'),
             };
         }
         
