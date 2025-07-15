@@ -185,6 +185,12 @@
             if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
             if (e.target.closest('#generate-report-btn')) handleGenerateReport();
             if (e.target.closest('#remove-file-btn')) handleRemoveFile();
+
+            const downloadBtn = e.target.closest('[data-action="download"]');
+            if (downloadBtn) handleDownloadDoc(downloadBtn.dataset.filename);
+            
+            const printBtn = e.target.closest('[data-action="print"]');
+            if (printBtn) window.print();
         });
 
         mainContent.addEventListener('change', (e) => {
@@ -240,7 +246,7 @@
             const fileInput = document.getElementById('file-upload');
             fileInfoEl.classList.add('hidden');
             fileInfoEl.classList.remove('flex');
-            fileInput.value = null; // This is crucial to allow re-uploading the same file
+            fileInput.value = null; 
         }
 
         async function handleGenerateLessonPlan() {
@@ -282,8 +288,8 @@
                         <div class="flex justify-between items-center mb-6 print:hidden">
                             <h2 class="text-2xl font-bold text-gray-800">Your Lesson Plan</h2>
                             <div class="flex space-x-2">
-                                <button onclick="handleDownloadDoc('${`Lesson Plan - ${topic}`.replace(/'/g, "\\'")}')" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
-                                <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                                <button data-action="download" data-filename="${`Lesson Plan - ${topic}`.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
                         </div>
                         <div id="printable-plan" class="space-y-6">${printableContent}</div>
@@ -350,8 +356,8 @@
                         <div class="flex justify-between items-center mb-6 print:hidden">
                             <h2 class="text-2xl font-bold text-gray-800">Generated Report</h2>
                             <div class="flex space-x-2">
-                                <button onclick="handleDownloadDoc('Report for ${studentName.replace(/'/g, "\\'")}')" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
-                                <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                                <button data-action="download" data-filename="Report for ${studentName.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
                         </div>
                         <div id="printable-report" class="space-y-6">${printableContent}</div>
