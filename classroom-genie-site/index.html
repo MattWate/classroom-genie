@@ -131,7 +131,12 @@
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Marks</label>
                             <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i><div class="flex text-sm text-gray-600"><label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"><span>Upload a file</span><input id="file-upload" type="file" class="sr-only" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PDF, Excel, CSV, Word up to 10MB</p></div></div>
-                            <p id="file-name" class="text-sm text-gray-600 mt-2"></p>
+                            <div id="file-info" class="hidden items-center justify-between bg-gray-100 p-2 rounded-lg mt-2">
+                                <span id="file-name" class="text-sm text-gray-700 truncate"></span>
+                                <button id="remove-file-btn" class="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors">
+                                    <i data-lucide="x" class="h-4 w-4"></i>
+                                </button>
+                            </div>
                         </div>
                         <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Student's Name</label><input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Jane Doe"></div>
                         <div><label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments for Narrative Report</label><p class="text-sm text-gray-500 mb-2">Highly recommended. Adding your own insights helps the AI write a much richer, more personalized report.</p><textarea id="comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 'Shows great enthusiasm...'"></textarea></div>
@@ -171,23 +176,15 @@
         
         // --- EVENT HANDLING (using delegation) ---
         document.addEventListener('click', (e) => {
-            // Main navigation
             const navLink = e.target.closest('.nav-link');
-            if (navLink) {
-                state.activeTab = navLink.dataset.tab;
-                render();
-                return;
-            }
-            // Home page links
+            if (navLink) { state.activeTab = navLink.dataset.tab; render(); return; }
+            
             const tabLink = e.target.closest('[data-tab-link]');
-            if (tabLink) {
-                state.activeTab = tabLink.dataset.tabLink;
-                render();
-                return;
-            }
-            // Generate buttons
+            if (tabLink) { state.activeTab = tabLink.dataset.tabLink; render(); return; }
+            
             if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
             if (e.target.closest('#generate-report-btn')) handleGenerateReport();
+            if (e.target.closest('#remove-file-btn')) handleRemoveFile();
         });
 
         mainContent.addEventListener('change', (e) => {
@@ -196,7 +193,7 @@
         
         // --- API & BUSINESS LOGIC ---
         
-        async function makeApiRequest(prompt, isJson, retries = 1) {
+        async function fetchWithRetry(prompt, isJson, retries = 1) {
             try {
                 const response = await fetch('/.netlify/functions/generate', {
                     method: 'POST',
@@ -209,27 +206,41 @@
                 
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!text) {
-                    throw new Error("The AI returned an empty response.");
+                    throw new Error("The AI returned an empty or invalid response.");
                 }
                 return text;
 
             } catch (error) {
                 if (retries > 0) {
-                    console.log("Request failed, retrying...");
-                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait before retry
-                    return makeApiRequest(prompt, isJson, retries - 1);
+                    console.warn("Request failed, retrying...", error);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    return fetchWithRetry(prompt, isJson, retries - 1);
                 }
-                throw error; // If retries are exhausted, throw the error
+                throw error;
             }
         }
 
         function handleFileChange(e) {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('file-name').textContent = `File: ${file.name}`;
+            const fileInfoEl = document.getElementById('file-info');
+            const fileNameEl = document.getElementById('file-name');
+            fileNameEl.textContent = file.name;
+            fileInfoEl.classList.remove('hidden');
+            fileInfoEl.classList.add('flex');
+            
             const reader = new FileReader();
             reader.onload = (event) => { state.reportFileContent = event.target.result; };
             reader.readAsText(file);
+        }
+
+        function handleRemoveFile() {
+            state.reportFileContent = '';
+            const fileInfoEl = document.getElementById('file-info');
+            const fileInput = document.getElementById('file-upload');
+            fileInfoEl.classList.add('hidden');
+            fileInfoEl.classList.remove('flex');
+            fileInput.value = null; // This is crucial to allow re-uploading the same file
         }
 
         async function handleGenerateLessonPlan() {
@@ -255,7 +266,7 @@
             const prompt = `Create a detailed lesson plan for a ${duration}-minute lesson. Topic: ${topic}. Learning Objectives: ${objectives}. Language: ${language} English. Format the response using these exact markdown headings: ## Introduction, ## Main Activities, ## Plenary, ## Resources, ## Visual Aid Ideas`;
 
             try {
-                const text = await makeApiRequest(prompt, false);
+                const text = await fetchWithRetry(prompt, false);
                 const plan = parseLessonPlan(text);
                 const webResources = getWebResources(topic);
                 const printableContent = `
@@ -317,7 +328,7 @@
             const prompt = `Based on the student data and teacher comments for ${studentName}, generate a JSON object with two keys: "marks_analysis" and "narrative_report". 1. "marks_analysis": Briefly summarize the key takeaways from the marks data in a few bullet points. 2. "narrative_report": Write a comprehensive and detailed school report that integrates the teacher's comments, analyzes the marks data, and concludes with areas for improvement. Maintain an encouraging tone. Do not use markdown. Student Marks Data: --- ${fileContent} --- Additional Teacher Comments: --- ${comments} ---`;
 
             try {
-                const jsonText = await makeApiRequest(prompt, true);
+                const jsonText = await fetchWithRetry(prompt, true);
                 const parsedResult = JSON.parse(jsonText);
 
                 let narrativeReport = "No narrative report could be generated.";
