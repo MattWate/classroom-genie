@@ -12,6 +12,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- FileSaver.js for downloading files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- html-to-docx for Word document generation -->
+    <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -60,7 +64,10 @@
 
     <script>
         // --- STATE MANAGEMENT ---
-        let activeTab = 'home';
+        const state = {
+            activeTab: 'home',
+            reportFileContent: ''
+        };
         const mainContent = document.getElementById('main-content');
         const navLinks = document.querySelectorAll('.nav-link');
 
@@ -141,20 +148,18 @@
                 </div>
             </div>`;
 
-        // --- RENDER FUNCTIONS ---
+        // --- RENDER & NAVIGATION ---
         function render() {
-            if (activeTab === 'home') mainContent.innerHTML = homePageTemplate;
-            else if (activeTab === 'lessonPlanner') mainContent.innerHTML = lessonPlannerTemplate;
-            else if (activeTab === 'reportWriter') mainContent.innerHTML = reportWriterTemplate;
-            
+            if (state.activeTab === 'home') mainContent.innerHTML = homePageTemplate;
+            else if (state.activeTab === 'lessonPlanner') mainContent.innerHTML = lessonPlannerTemplate;
+            else if (state.activeTab === 'reportWriter') mainContent.innerHTML = reportWriterTemplate;
             updateNavLinks();
-            addEventListeners();
             lucide.createIcons();
         }
 
         function updateNavLinks() {
             navLinks.forEach(link => {
-                if (link.dataset.tab === activeTab) {
+                if (link.dataset.tab === state.activeTab) {
                     link.classList.add('bg-teal-600', 'text-white', 'shadow-md');
                     link.classList.remove('text-gray-600', 'hover:bg-gray-100');
                 } else {
@@ -164,50 +169,66 @@
             });
         }
         
-        // --- EVENT LISTENERS ---
-        function addEventListeners() {
+        // --- EVENT HANDLING (using delegation) ---
+        document.addEventListener('click', (e) => {
             // Main navigation
-            navLinks.forEach(link => {
-                link.addEventListener('click', () => {
-                    activeTab = link.dataset.tab;
-                    render();
-                });
-            });
-
+            const navLink = e.target.closest('.nav-link');
+            if (navLink) {
+                state.activeTab = navLink.dataset.tab;
+                render();
+                return;
+            }
             // Home page links
-            if (activeTab === 'home') {
-                document.querySelectorAll('[data-tab-link]').forEach(link => {
-                    link.addEventListener('click', () => {
-                        activeTab = link.dataset.tabLink;
-                        render();
-                    });
+            const tabLink = e.target.closest('[data-tab-link]');
+            if (tabLink) {
+                state.activeTab = tabLink.dataset.tabLink;
+                render();
+                return;
+            }
+            // Generate buttons
+            if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
+            if (e.target.closest('#generate-report-btn')) handleGenerateReport();
+        });
+
+        mainContent.addEventListener('change', (e) => {
+            if (e.target.id === 'file-upload') handleFileChange(e);
+        });
+        
+        // --- API & BUSINESS LOGIC ---
+        
+        async function makeApiRequest(prompt, isJson, retries = 1) {
+            try {
+                const response = await fetch('/.netlify/functions/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, isJson })
                 });
-            }
+                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                
+                const result = await response.json();
+                
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) {
+                    throw new Error("The AI returned an empty response.");
+                }
+                return text;
 
-            // Lesson Planner
-            if (activeTab === 'lessonPlanner') {
-                document.getElementById('generate-plan-btn').addEventListener('click', handleGenerateLessonPlan);
-            }
-
-            // Report Writer
-            if (activeTab === 'reportWriter') {
-                document.getElementById('generate-report-btn').addEventListener('click', handleGenerateReport);
-                document.getElementById('file-upload').addEventListener('change', handleFileChange);
+            } catch (error) {
+                if (retries > 0) {
+                    console.log("Request failed, retrying...");
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait before retry
+                    return makeApiRequest(prompt, isJson, retries - 1);
+                }
+                throw error; // If retries are exhausted, throw the error
             }
         }
-        
-        // --- HANDLERS & LOGIC ---
 
         function handleFileChange(e) {
             const file = e.target.files[0];
             if (!file) return;
-            const fileNameEl = document.getElementById('file-name');
-            fileNameEl.textContent = `File: ${file.name}`;
+            document.getElementById('file-name').textContent = `File: ${file.name}`;
             const reader = new FileReader();
-            reader.onload = (event) => {
-                // Store file content on a global or accessible object
-                window.reportFileContent = event.target.result;
-            };
+            reader.onload = (event) => { state.reportFileContent = event.target.result; };
             reader.readAsText(file);
         }
 
@@ -234,45 +255,38 @@
             const prompt = `Create a detailed lesson plan for a ${duration}-minute lesson. Topic: ${topic}. Learning Objectives: ${objectives}. Language: ${language} English. Format the response using these exact markdown headings: ## Introduction, ## Main Activities, ## Plenary, ## Resources, ## Visual Aid Ideas`;
 
             try {
-                const response = await fetch('/.netlify/functions/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, isJson: false })
-                });
-
-                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
-                
-                const result = await response.json();
-                const text = result.candidates[0].content.parts[0].text;
-                
-                // Parse and render plan
+                const text = await makeApiRequest(prompt, false);
                 const plan = parseLessonPlan(text);
                 const webResources = getWebResources(topic);
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Lesson Plan: ${topic}</h1>
+                    ${createSectionHTML('target', 'green', 'Introduction', plan.introduction)}
+                    ${createSectionHTML('list-checks', 'blue', 'Main Activities', plan.mainActivities)}
+                    ${createSectionHTML('flag', 'purple', 'Plenary / Conclusion', plan.plenary)}
+                    ${createSectionHTML('paperclip', 'orange', 'Resources', plan.resources)}
+                `;
+                
                 outputEl.innerHTML = `
                     <div class="bg-gray-50/50 p-6 rounded-lg">
                         <div class="flex justify-between items-center mb-6 print:hidden">
                             <h2 class="text-2xl font-bold text-gray-800">Your Lesson Plan</h2>
-                            <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print Plan</button>
-                        </div>
-                        <div id="printable-plan" class="space-y-6">
-                             <h1 class="text-3xl font-bold text-center hidden print-only-title">Lesson Plan: ${topic}</h1>
-                            ${createSection('target', 'green', 'Introduction', plan.introduction)}
-                            ${createSection('list-checks', 'blue', 'Main Activities', plan.mainActivities)}
-                            ${createSection('flag', 'purple', 'Plenary / Conclusion', plan.plenary)}
-                            ${createSection('paperclip', 'orange', 'Resources', plan.resources)}
-                            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 print:hidden">
-                                <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
-                                <ul class="space-y-4">${webResources.map(r => `
-                                    <li class="border-b border-gray-200 pb-3 last:border-b-0">
-                                        <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-teal-600 hover:underline">${r.title}</a>
-                                        <p class="text-sm text-gray-500 mt-1">${r.snippet}</p>
-                                    </li>`).join('')}
-                                </ul>
+                            <div class="flex space-x-2">
+                                <button onclick="handleDownloadDoc('${`Lesson Plan - ${topic}`.replace(/'/g, "\\'")}')" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
+                        </div>
+                        <div id="printable-plan" class="space-y-6">${printableContent}</div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6 print:hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
+                            <ul class="space-y-4">${webResources.map(r => `
+                                <li class="border-b border-gray-200 pb-3 last:border-b-0">
+                                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-teal-600 hover:underline">${r.title}</a>
+                                    <p class="text-sm text-gray-500 mt-1">${r.snippet}</p>
+                                </li>`).join('')}
+                            </ul>
                         </div>
                     </div>`;
                 lucide.createIcons();
-
             } catch (e) {
                 errorEl.textContent = `An error occurred: ${e.message}`;
                 errorEl.classList.remove('hidden');
@@ -287,7 +301,7 @@
         async function handleGenerateReport() {
             const studentName = document.getElementById('studentName').value;
             const comments = document.getElementById('comments').value;
-            const fileContent = window.reportFileContent || '';
+            const fileContent = state.reportFileContent || '';
             const errorEl = document.getElementById('rw-error');
             const outputEl = document.getElementById('rw-output');
             const button = document.getElementById('generate-report-btn');
@@ -303,46 +317,35 @@
             const prompt = `Based on the student data and teacher comments for ${studentName}, generate a JSON object with two keys: "marks_analysis" and "narrative_report". 1. "marks_analysis": Briefly summarize the key takeaways from the marks data in a few bullet points. 2. "narrative_report": Write a comprehensive and detailed school report that integrates the teacher's comments, analyzes the marks data, and concludes with areas for improvement. Maintain an encouraging tone. Do not use markdown. Student Marks Data: --- ${fileContent} --- Additional Teacher Comments: --- ${comments} ---`;
 
             try {
-                const response = await fetch('/.netlify/functions/generate', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, isJson: true })
-                });
-
-                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
-                
-                const result = await response.json();
-                const jsonText = result.candidates[0].content.parts[0].text;
+                const jsonText = await makeApiRequest(prompt, true);
                 const parsedResult = JSON.parse(jsonText);
 
-                // Flexible parsing logic for the report
                 let narrativeReport = "No narrative report could be generated.";
                 let marksAnalysis = "No marks analysis could be generated.";
-
                 for (const key in parsedResult) {
                     const lowerKey = key.toLowerCase();
-                    if (lowerKey.includes('narrative')) {
-                        narrativeReport = parsedResult[key];
-                    }
-                    if (lowerKey.includes('marks')) {
-                        marksAnalysis = parsedResult[key];
-                    }
+                    if (lowerKey.includes('narrative')) narrativeReport = parsedResult[key];
+                    if (lowerKey.includes('marks')) marksAnalysis = parsedResult[key];
                 }
+                
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">School Report for ${studentName}</h1>
+                    ${createSectionHTML('message-square', 'purple', 'Narrative Report', narrativeReport)}
+                    ${createSectionHTML('bar-chart-2', 'teal', 'Marks Analysis', marksAnalysis)}
+                `;
                 
                 outputEl.innerHTML = `
                     <div class="bg-gray-50/50 p-6 rounded-lg">
                         <div class="flex justify-between items-center mb-6 print:hidden">
                             <h2 class="text-2xl font-bold text-gray-800">Generated Report</h2>
-                            <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print Report</button>
+                            <div class="flex space-x-2">
+                                <button onclick="handleDownloadDoc('Report for ${studentName.replace(/'/g, "\\'")}')" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button onclick="window.print()" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
                         </div>
-                        <div id="printable-report" class="space-y-6">
-                            <h1 class="text-3xl font-bold text-center hidden print-only-title">School Report for ${studentName}</h1>
-                            ${createSection('message-square', 'purple', 'Narrative Report', narrativeReport)}
-                            ${createSection('bar-chart-2', 'teal', 'Marks Analysis', marksAnalysis)}
-                        </div>
+                        <div id="printable-report" class="space-y-6">${printableContent}</div>
                     </div>`;
                 lucide.createIcons();
-
             } catch (e) {
                 errorEl.textContent = `An error occurred: ${e.message}`;
                 errorEl.classList.remove('hidden');
@@ -356,21 +359,14 @@
 
         // --- UTILITY FUNCTIONS ---
         function parseLessonPlan(text) {
-            // This function uses a flexible regex to find content between headings.
             const getSection = (heading) => {
-                // This regex looks for ##, optional whitespace, the heading text, more optional whitespace, and a newline.
-                // It's case-insensitive ('i') to handle variations.
                 const regex = new RegExp(`##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
                 const match = text.match(regex);
-                // Clean the result of markdown characters.
-                const content = match ? match[1] : '';
-                return content ? content.replace(/\*\*|##|\*/g, '').trim() : '';
+                return match ? match[1].replace(/\*\*|##|\*/g, '').trim() : '';
             };
-
             return {
                 introduction: getSection('Introduction'),
                 mainActivities: getSection('Main Activities'),
-                // Handle cases where the AI might use a different heading for Plenary
                 plenary: getSection('Plenary') || getSection('Plenary / Conclusion'),
                 resources: getSection('Resources'),
             };
@@ -378,31 +374,32 @@
         
         function getWebResources(topic) {
             return [
-                { title: `Search YouTube for "${topic}" videos`, snippet: `Find educational videos, songs, and animations about ${topic}.`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent('educational ' + topic + ' for kids')}` },
-                { title: `Find activities for "${topic}" on Google`, snippet: `Search for printable worksheets, activities, and games related to ${topic}.`, url: `https://www.google.com/search?q=${encodeURIComponent(topic + ' classroom activities and worksheets')}` },
+                { title: `Search YouTube for "${topic}" videos`, snippet: `Find educational videos, songs, and animations.`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent('educational ' + topic + ' for kids')}` },
+                { title: `Find activities for "${topic}" on Google`, snippet: `Search for printable worksheets and games.`, url: `https://www.google.com/search?q=${encodeURIComponent(topic + ' classroom activities and worksheets')}` },
             ];
         }
 
-        function createSection(icon, color, title, content) {
+        function createSectionHTML(icon, color, title, content) {
             let textContent = 'No content provided.';
             if (typeof content === 'string') {
                 textContent = content.replace(/\n/g, '<br>');
             } else if (Array.isArray(content)) {
-                // Handles an array of strings (like bullet points)
-                textContent = content.join('<br>');
+                textContent = `<ul>${content.map(item => `<li>${item}</li>`).join('')}</ul>`;
             } else if (typeof content === 'object' && content !== null) {
-                // Handles a simple object by joining its values.
-                // This is a robust way to deal with unexpected object structures from the AI.
-                textContent = Object.values(content).join('<br>');
+                textContent = `<ul>${Object.values(content).map(item => `<li>${item}</li>`).join('')}</ul>`;
             } else if (content) {
                 textContent = String(content).replace(/\n/g, '<br>');
             }
+            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid"><h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="${icon}" class="text-${color}-500"></i><span class="ml-2">${title}</span></h3><div class="prose prose-sm max-w-none text-gray-600">${textContent}</div></div>`;
+        }
 
-            return `
-                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid">
-                    <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="${icon}" class="text-${color}-500"></i><span class="ml-2">${title}</span></h3>
-                    <div class="prose prose-sm max-w-none text-gray-600">${textContent}</div>
-                </div>`;
+        async function handleDownloadDoc(filename) {
+            const printableAreaId = state.activeTab === 'lessonPlanner' ? 'printable-plan' : 'printable-report';
+            const content = document.getElementById(printableAreaId).innerHTML;
+            const blob = await htmlToDocx.asBlob(content, {
+                margins: { top: 720, right: 720, bottom: 720, left: 720 }
+            });
+            saveAs(blob, `${filename}.docx`);
         }
 
         // --- INITIAL RENDER ---
