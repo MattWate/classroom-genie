@@ -370,13 +370,31 @@
                 const plan = parseLessonPlan(text);
                 const webResources = getWebResources(topic);
                 
+                const getHighlight = (text, length = 70) => {
+                    if (!text) return 'No details provided.';
+                    const sentence = text.split('.')[0];
+                    return sentence.length > length ? sentence.substring(0, length) + '...' : sentence;
+                };
+
                 const timelineHTML = `
-                    <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
-                        <div class="text-center px-2"><i data-lucide="flag" class="mx-auto h-6 w-6 text-green-500"></i><p class="text-xs mt-1">Introduction</p></div>
-                        <div class="flex-1 h-px bg-gray-300 mx-2"></div>
-                        <div class="text-center px-2"><i data-lucide="list-checks" class="mx-auto h-6 w-6 text-blue-500"></i><p class="text-xs mt-1">Main Activities</p></div>
-                        <div class="flex-1 h-px bg-gray-300 mx-2"></div>
-                        <div class="text-center px-2"><i data-lucide="award" class="mx-auto h-6 w-6 text-purple-500"></i><p class="text-xs mt-1">Plenary</p></div>
+                    <div class="flex items-start text-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 space-x-4">
+                        <div class="flex-1">
+                            <i data-lucide="flag" class="mx-auto h-6 w-6 text-green-500"></i>
+                            <p class="text-xs mt-1 font-bold">Introduction</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.introduction)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="list-checks" class="mx-auto h-6 w-6 text-blue-500"></i>
+                            <p class="text-xs mt-1 font-bold">Main Activities</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.mainActivities)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="award" class="mx-auto h-6 w-6 text-purple-500"></i>
+                            <p class="text-xs mt-1 font-bold">Plenary</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.plenary)}</p>
+                        </div>
                     </div>
                 `;
 
