@@ -28,8 +28,9 @@
             body * { visibility: hidden; }
             #printable-plan, #printable-plan *,
             #printable-report, #printable-report *,
-            #printable-test, #printable-test * { visibility: visible; }
-            #printable-plan, #printable-report, #printable-test {
+            #printable-test, #printable-test *,
+            #printable-worksheet, #printable-worksheet * { visibility: visible; }
+            #printable-plan, #printable-report, #printable-test, #printable-worksheet {
                 position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; border: none;
             }
             .print-only-title { display: block !important; text-align: center; margin-bottom: 2rem; }
@@ -58,6 +59,9 @@
                         </button>
                         <button data-tab="testCreator" class="nav-link flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-100">
                             <i data-lucide="file-check" class="h-5 w-5"></i><span class="ml-3">Revision Test Creator</span>
+                        </button>
+                         <button data-tab="worksheetCreator" class="nav-link flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 text-gray-600 hover:bg-gray-100">
+                            <i data-lucide="clipboard-paste" class="h-5 w-5"></i><span class="ml-3">Worksheet Creator</span>
                         </button>
                     </nav>
                 </div>
@@ -108,11 +112,17 @@
                         <p class="mt-2 text-gray-600">Upload student marks and add your comments to generate comprehensive, personalized school reports automatically.</p>
                         <div class="flex items-center mt-6 font-semibold text-orange-600"><span>Write Reports</span><i data-lucide="arrow-right" class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"></i></div>
                     </div>
-                    <div data-tab-link="testCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400 md:col-span-2">
+                    <div data-tab-link="testCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400">
                         <i data-lucide="file-check" class="h-12 w-12 text-blue-500 mb-4"></i>
                         <h2 class="text-2xl font-bold text-gray-800">Revision Test Creator</h2>
                         <p class="mt-2 text-gray-600">Quickly create revision tests on any topic, with various question types, to help your students prepare and succeed.</p>
                         <div class="flex items-center mt-6 font-semibold text-blue-600"><span>Create a Test</span><i data-lucide="arrow-right" class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"></i></div>
+                    </div>
+                     <div data-tab-link="worksheetCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-green-400">
+                        <i data-lucide="clipboard-paste" class="h-12 w-12 text-green-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Worksheet Creator</h2>
+                        <p class="mt-2 text-gray-600">Design beautiful, age-appropriate worksheets with varied activities to engage every learner in your classroom.</p>
+                        <div class="flex items-center mt-6 font-semibold text-green-600"><span>Create a Worksheet</span><i data-lucide="arrow-right" class="ml-2 h-5 w-5 transition-transform duration-300 group-hover:translate-x-1"></i></div>
                     </div>
                 </div>
             </div>`;
@@ -228,6 +238,38 @@
                     </div>
                 </div>
             </div>`;
+        
+        const worksheetCreatorTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Worksheet Creator</h2>
+                    <p class="text-gray-500 mb-8">Design engaging, age-appropriate worksheets for any topic.</p>
+                    <div class="space-y-6 mb-8">
+                        <div>
+                            <label for="ws-grade" class="block text-sm font-medium text-gray-700 mb-1">Grade Level</label>
+                            <select id="ws-grade" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                <option value="Kindergarten-Grade 1">Kindergarten - Grade 1</option>
+                                <option value="Grade 2-3">Grades 2-3</option>
+                                <option value="Grade 4-6" selected>Grades 4-6</option>
+                                <option value="Grade 7-9">Grades 7-9</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="ws-topic" class="block text-sm font-medium text-gray-700 mb-1">Topic & Instructions</label>
+                            <textarea id="ws-topic" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The basics of photosynthesis. Include a diagram to label and a fill-in-the-blanks section."></textarea>
+                        </div>
+                    </div>
+                    <button id="generate-worksheet-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Worksheet</button>
+                    <div id="ws-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
+                </div>
+                <div id="ws-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your worksheet will appear here.</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to get started.</p>
+                    </div>
+                </div>
+            </div>`;
 
         // --- RENDER & NAVIGATION ---
         function render() {
@@ -235,6 +277,7 @@
             else if (state.activeTab === 'lessonPlanner') mainContent.innerHTML = lessonPlannerTemplate;
             else if (state.activeTab === 'reportWriter') mainContent.innerHTML = reportWriterTemplate;
             else if (state.activeTab === 'testCreator') mainContent.innerHTML = testCreatorTemplate;
+            else if (state.activeTab === 'worksheetCreator') mainContent.innerHTML = worksheetCreatorTemplate;
             updateNavLinks();
             lucide.createIcons();
         }
@@ -262,6 +305,7 @@
             if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
             if (e.target.closest('#generate-report-btn')) handleGenerateReport();
             if (e.target.closest('#generate-test-btn')) handleGenerateTest();
+            if (e.target.closest('#generate-worksheet-btn')) handleGenerateWorksheet();
             if (e.target.closest('#remove-file-btn')) handleRemoveFile();
 
             const downloadBtn = e.target.closest('[data-action="download"]');
@@ -570,6 +614,66 @@
             }
         }
 
+        async function handleGenerateWorksheet() {
+            const topic = document.getElementById('ws-topic').value;
+            const grade = document.getElementById('ws-grade').value;
+            const errorEl = document.getElementById('ws-error');
+            const outputEl = document.getElementById('ws-output');
+            const button = document.getElementById('generate-worksheet-btn');
+
+            errorEl.classList.add('hidden');
+            if (!topic) {
+                errorEl.textContent = 'Please provide a topic and instructions.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Designing your worksheet...</p></div>`;
+
+            const prompt = `Create a 1-page worksheet for a ${grade} student. The main topic is: "${topic}". Generate the content as a single block of markdown-formatted text. Structure the worksheet with clear headings for each activity (e.g., "## Activity 1: Matching"). Include placeholders for any visuals you think are appropriate, formatted like this: [Illustration of a happy sun]. Ensure the activities are suitable for the specified grade level. Also generate a separate answer key under a "## Answer Key" heading.`;
+
+            try {
+                const text = await fetchWithRetry(prompt, false);
+                
+                const worksheetContent = text.split('## Answer Key')[0] || '';
+                const answerKeyContent = text.split('## Answer Key')[1] || 'No answer key provided.';
+
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Worksheet: ${topic.split(',')[0]}</h1>
+                    <div class="prose max-w-none">${worksheetContent.replace(/## /g, '<h3>').replace(/\n/g, '<br>')}</div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid mt-6">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
+                        <div class="prose prose-sm max-w-none text-gray-600">${answerKeyContent.replace(/\n/g, '<br>')}</div>
+                    </div>
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Generated Worksheet</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="Worksheet - ${topic.split(',')[0].replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        <div id="printable-worksheet" class="p-4 border rounded-lg bg-white">${printableContent}</div>
+                    </div>`;
+                lucide.createIcons();
+
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Worksheet`;
+                lucide.createIcons();
+            }
+        }
+
+
         // --- UTILITY FUNCTIONS ---
         function parseLessonPlan(text) {
             const getSection = (heading) => {
@@ -611,6 +715,7 @@
             if (state.activeTab === 'lessonPlanner') printableAreaId = 'printable-plan';
             else if (state.activeTab === 'reportWriter') printableAreaId = 'printable-report';
             else if (state.activeTab === 'testCreator') printableAreaId = 'printable-test';
+            else if (state.activeTab === 'worksheetCreator') printableAreaId = 'printable-worksheet';
             
             if (!printableAreaId) return;
 
