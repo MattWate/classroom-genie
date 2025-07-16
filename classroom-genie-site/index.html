@@ -115,8 +115,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div><label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label><input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Water Cycle"></div>
                         <div class="flex items-center space-x-4">
-                            <div><label for="duration" class="block text-sm font-medium text-gray-700 mb-1">Duration (min)</label><input type="number" id="duration" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"></div>
-                            <div><label for="language" class="block text-sm font-medium text-gray-700 mb-1">Language</label><select id="language" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white"><option value="US">US English</option><option value="UK">UK English</option></select></div>
+                            <div>
+                                <label for="duration-select" class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                                <select id="duration-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                    <option value="20">20 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                    <option value="45" selected>45 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div id="custom-duration-wrapper" class="hidden">
+                                <label for="duration-custom" class="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+                                <input type="number" id="duration-custom" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                            </div>
                         </div>
                         <div class="md:col-span-2"><label for="objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label><textarea id="objectives" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Students will be able to name the stages of the water cycle."></textarea></div>
                     </div>
@@ -173,7 +185,21 @@
                             <label for="test-topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
                             <textarea id="test-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Roman Empire, including the rise and fall, key emperors, and major architectural achievements."></textarea>
                         </div>
-                        <div><label for="num-questions" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label><input type="number" id="num-questions" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500"></div>
+                        <div class="flex items-end space-x-4">
+                            <div>
+                                <label for="num-questions-select" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
+                                <select id="num-questions-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                    <option value="10" selected>10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div id="custom-questions-wrapper" class="hidden flex-1">
+                                <label for="num-questions-custom" class="block text-sm font-medium text-gray-700 mb-1">Custom</label>
+                                <input type="number" id="num-questions-custom" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                            </div>
+                        </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Question Types</label>
                             <div class="space-y-2 mt-2">
@@ -239,6 +265,12 @@
 
         mainContent.addEventListener('change', (e) => {
             if (e.target.id === 'file-upload') handleFileChange(e);
+            if (e.target.id === 'duration-select') {
+                document.getElementById('custom-duration-wrapper').classList.toggle('hidden', e.target.value !== 'custom');
+            }
+            if (e.target.id === 'num-questions-select') {
+                document.getElementById('custom-questions-wrapper').classList.toggle('hidden', e.target.value !== 'custom');
+            }
         });
         
         // --- API & BUSINESS LOGIC ---
@@ -296,7 +328,11 @@
         async function handleGenerateLessonPlan() {
             const topic = document.getElementById('topic').value;
             const objectives = document.getElementById('objectives').value;
-            const duration = document.getElementById('duration').value;
+            const durationSelect = document.getElementById('duration-select');
+            let duration = durationSelect.value;
+            if (duration === 'custom') {
+                duration = document.getElementById('duration-custom').value;
+            }
             const language = document.getElementById('language').value;
             const errorEl = document.getElementById('lp-error');
             const outputEl = document.getElementById('lp-output');
@@ -319,6 +355,17 @@
                 const text = await fetchWithRetry(prompt, false);
                 const plan = parseLessonPlan(text);
                 const webResources = getWebResources(topic);
+                
+                const timelineHTML = `
+                    <div class="flex justify-between items-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <div class="text-center px-2"><i data-lucide="flag" class="mx-auto h-6 w-6 text-green-500"></i><p class="text-xs mt-1">Introduction</p></div>
+                        <div class="flex-1 h-px bg-gray-300 mx-2"></div>
+                        <div class="text-center px-2"><i data-lucide="list-checks" class="mx-auto h-6 w-6 text-blue-500"></i><p class="text-xs mt-1">Main Activities</p></div>
+                        <div class="flex-1 h-px bg-gray-300 mx-2"></div>
+                        <div class="text-center px-2"><i data-lucide="award" class="mx-auto h-6 w-6 text-purple-500"></i><p class="text-xs mt-1">Plenary</p></div>
+                    </div>
+                `;
+
                 const printableContent = `
                     <h1 class="text-3xl font-bold text-center">Lesson Plan: ${topic}</h1>
                     ${createSectionHTML('target', 'green', 'Introduction', plan.introduction)}
@@ -336,6 +383,7 @@
                                 <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
                         </div>
+                        ${timelineHTML}
                         <div id="printable-plan" class="space-y-6">${printableContent}</div>
                         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6 print:hidden">
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
@@ -420,7 +468,11 @@
 
         async function handleGenerateTest() {
             const topic = document.getElementById('test-topic').value;
-            const numQuestions = document.getElementById('num-questions').value;
+            const numQuestionsSelect = document.getElementById('num-questions-select');
+            let numQuestions = numQuestionsSelect.value;
+            if (numQuestions === 'custom') {
+                numQuestions = document.getElementById('num-questions-custom').value;
+            }
             const errorEl = document.getElementById('tc-error');
             const outputEl = document.getElementById('tc-output');
             const button = document.getElementById('generate-test-btn');
