@@ -652,7 +652,7 @@
             const textPrompt = `Create a 1-page worksheet for a ${grade} student. The main topic is: "${topic}". The output must be a JSON object with three keys: "title", "worksheet_content", and "image_prompts". "title" should be a short title for the worksheet. "worksheet_content" should be the full markdown text of the worksheet, including unique placeholders for each image like [IMAGE_1], [IMAGE_2], etc. "image_prompts" should be an array of 2-3 simple, clear prompts for an image generation model to create educational illustrations for the corresponding placeholders (e.g., "A simple diagram of the water cycle", "A cartoon sun smiling"). Also generate a separate answer key within the worksheet_content under a "## Answer Key" heading.`;
 
             try {
-                const jsonText = await fetchWithRetry(textPrompt, true);
+                const jsonText = await fetchWithRetry(textPrompt, true, 1, 'text');
                 const parsedResult = JSON.parse(jsonText);
                 
                 let worksheetContent = parsedResult.worksheet_content || '';
