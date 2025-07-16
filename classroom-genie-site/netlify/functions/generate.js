@@ -11,7 +11,8 @@ exports.handler = async function (event) {
   const apiKey = process.env.GOOGLE_API_KEY; 
 
   if (!apiKey) {
-    return { statusCode: 500, body: 'API key is not set.' };
+    console.error("API key is not set.");
+    return { statusCode: 500, body: JSON.stringify({ error: 'API key is not set on the server.' }) };
   }
 
   // --- Handle Image Generation Request ---
@@ -28,10 +29,14 @@ exports.handler = async function (event) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(imagePayload),
       });
-      if (!response.ok) throw new Error(`Image API request failed with status ${response.status}`);
-      const data = await response.json();
-      return { statusCode: 200, body: JSON.stringify(data) };
+      const responseBody = await response.json();
+      if (!response.ok) {
+        console.error("Image API Error:", responseBody);
+        throw new Error(`Image API request failed with status ${response.status}`);
+      }
+      return { statusCode: 200, body: JSON.stringify(responseBody) };
     } catch (error) {
+      console.error("Caught Image Generation Error:", error);
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
   }
@@ -49,10 +54,14 @@ exports.handler = async function (event) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(textPayload),
     });
-    if (!response.ok) throw new Error(`Text API request failed with status ${response.status}`);
-    const data = await response.json();
-    return { statusCode: 200, body: JSON.stringify(data) };
+    const responseBody = await response.json();
+    if (!response.ok) {
+        console.error("Text API Error:", responseBody);
+        throw new Error(`Text API request failed with status ${response.status}`);
+    }
+    return { statusCode: 200, body: JSON.stringify(responseBody) };
   } catch (error) {
+    console.error("Caught Text Generation Error:", error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
