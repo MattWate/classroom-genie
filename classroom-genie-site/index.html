@@ -535,13 +535,13 @@
             button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
             outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Creating your revision test...</p></div>`;
 
-            const prompt = `Create a revision test for a student. Topic: ${topic}. Number of questions: ${numQuestions}. Question types: ${questionTypes.join(', ')}. The output must be a JSON object with two keys: "questions" and "answers". "questions" should be an array of strings, where each string is a full question (including options for multiple-choice). "answers" should be an array of strings providing the correct answer for each corresponding question.`;
+            const prompt = `Create a revision test for a student. Do not number the questions. Topic: ${topic}. Number of questions: ${numQuestions}. Question types: ${questionTypes.join(', ')}. The output must be a JSON object with two keys: "questions" and "answers". "questions" should be an array of strings, where each string is a full question (including options for multiple-choice). "answers" should be an array of strings providing the correct answer for each corresponding question.`;
 
             try {
                 const jsonText = await fetchWithRetry(prompt, true);
                 const parsedResult = JSON.parse(jsonText);
 
-                const questions = parsedResult.questions || [];
+                const questions = (parsedResult.questions || []).map(q => q.replace(/^\d+\.\s*/, ''));
                 const answers = parsedResult.answers || [];
 
                 const printableContent = `
