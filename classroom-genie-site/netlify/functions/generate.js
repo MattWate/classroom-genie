@@ -1,5 +1,5 @@
 // The code for our secure backend function
-// This function can now handle both text and image generation requests.
+// This version includes enhanced error logging to pinpoint API issues.
 
 exports.handler = async function (event) {
   // Only allow POST requests
@@ -11,8 +11,8 @@ exports.handler = async function (event) {
   const apiKey = process.env.GOOGLE_API_KEY; 
 
   if (!apiKey) {
-    console.error("API key is not set.");
-    return { statusCode: 500, body: JSON.stringify({ error: 'API key is not set on the server.' }) };
+    console.error("CRITICAL: GOOGLE_API_KEY environment variable is not set.");
+    return { statusCode: 500, body: JSON.stringify({ error: 'API key is not configured on the server.' }) };
   }
 
   // --- Handle Image Generation Request ---
@@ -31,12 +31,13 @@ exports.handler = async function (event) {
       });
       const responseBody = await response.json();
       if (!response.ok) {
-        console.error("Image API Error:", responseBody);
-        throw new Error(`Image API request failed with status ${response.status}`);
+        // Log the detailed error from Google's API
+        console.error("Image Generation API Error:", JSON.stringify(responseBody, null, 2));
+        throw new Error(`Image API request failed: ${responseBody.error?.message || 'Unknown error'}`);
       }
       return { statusCode: 200, body: JSON.stringify(responseBody) };
     } catch (error) {
-      console.error("Caught Image Generation Error:", error);
+      console.error("Caught Image Generation Exception:", error);
       return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
     }
   }
@@ -56,12 +57,13 @@ exports.handler = async function (event) {
     });
     const responseBody = await response.json();
     if (!response.ok) {
-        console.error("Text API Error:", responseBody);
-        throw new Error(`Text API request failed with status ${response.status}`);
+        // Log the detailed error from Google's API
+        console.error("Text Generation API Error:", JSON.stringify(responseBody, null, 2));
+        throw new Error(`Text API request failed: ${responseBody.error?.message || 'Unknown error'}`);
     }
     return { statusCode: 200, body: JSON.stringify(responseBody) };
   } catch (error) {
-    console.error("Caught Text Generation Error:", error);
+    console.error("Caught Text Generation Exception:", error);
     return { statusCode: 500, body: JSON.stringify({ error: error.message }) };
   }
 };
