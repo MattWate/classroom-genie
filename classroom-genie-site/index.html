@@ -344,16 +344,22 @@
         
         // --- API & BUSINESS LOGIC ---
         
-        async function fetchWithRetry(prompt, isJson, retries = 1) {
+        async function fetchWithRetry(prompt, isJson, retries = 1, requestType = 'text') {
             try {
                 const response = await fetch('/.netlify/functions/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, isJson })
+                    body: JSON.stringify({ prompt, isJson, requestType })
                 });
                 if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
                 
                 const result = await response.json();
+
+                if (requestType === 'image') {
+                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                    if (!imageUrl) throw new Error("Image generation failed.");
+                    return imageUrl;
+                }
                 
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!text) {
@@ -365,7 +371,7 @@
                 if (retries > 0) {
                     console.warn("Request failed, retrying...", error);
                     await new Promise(resolve => setTimeout(resolve, 500));
-                    return fetchWithRetry(prompt, isJson, retries - 1);
+                    return fetchWithRetry(prompt, isJson, retries - 1, requestType);
                 }
                 throw error;
             }
@@ -643,23 +649,37 @@
             button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
             outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Designing your worksheet...</p></div>`;
 
-            const prompt = `Create a 1-page worksheet for a ${grade} student. The main topic is: "${topic}". Generate the content as a single block of markdown-formatted text. Structure the worksheet with clear headings for each activity (e.g., "## Activity 1: Matching"). Include placeholders for any visuals you think are appropriate, formatted like this: [Illustration of a happy sun]. Ensure the activities are suitable for the specified grade level. Also generate a separate answer key under a "## Answer Key" heading.`;
+            const textPrompt = `Create a 1-page worksheet for a ${grade} student. The main topic is: "${topic}". The output must be a JSON object with three keys: "title", "worksheet_content", and "image_prompts". "title" should be a short title for the worksheet. "worksheet_content" should be the full markdown text of the worksheet, including unique placeholders for each image like [IMAGE_1], [IMAGE_2], etc. "image_prompts" should be an array of 2-3 simple, clear prompts for an image generation model to create educational illustrations for the corresponding placeholders (e.g., "A simple diagram of the water cycle", "A cartoon sun smiling"). Also generate a separate answer key within the worksheet_content under a "## Answer Key" heading.`;
 
             try {
-                const text = await fetchWithRetry(prompt, false);
+                const jsonText = await fetchWithRetry(textPrompt, true);
+                const parsedResult = JSON.parse(jsonText);
                 
-                let worksheetContent = text.split('## Answer Key')[0] || '';
-                const answerKeyContent = text.split('## Answer Key')[1] || 'No answer key provided.';
+                let worksheetContent = parsedResult.worksheet_content || '';
+                const imagePrompts = parsedResult.image_prompts || [];
+                const title = parsedResult.title || 'Worksheet';
 
-                // Replace placeholders with styled divs
-                worksheetContent = worksheetContent.replace(/\[(.*?)\]/g, (match, p1) => {
-                    return `<div class="worksheet-image-placeholder my-4"><i data-lucide="image" class="h-6 w-6 mr-2"></i>${p1}</div>`;
+                outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Generating images (1/${imagePrompts.length})...</p></div>`;
+                
+                const imageUrls = [];
+                for (let i = 0; i < imagePrompts.length; i++) {
+                    outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Generating images (${i + 1}/${imagePrompts.length})...</p></div>`;
+                    const imagePrompt = `simple, clear, colorful diagram for a children's worksheet. Style: friendly cartoon, educational. Subject: ${imagePrompts[i]}`;
+                    const imageUrl = await fetchWithRetry(imagePrompt, false, 1, 'image');
+                    imageUrls.push(imageUrl);
+                }
+
+                imageUrls.forEach((url, i) => {
+                    worksheetContent = worksheetContent.replace(`[IMAGE_${i + 1}]`, `<img src="${url}" alt="${imagePrompts[i]}" class="my-4 rounded-lg shadow-md border border-gray-200" />`);
                 });
+                
+                const answerKeyContent = worksheetContent.split('## Answer Key')[1] || 'No answer key provided.';
+                worksheetContent = worksheetContent.split('## Answer Key')[0];
 
                 const printableContent = `
                     <div class="p-6 border rounded-lg bg-white">
                         <div class="flex justify-between items-center border-b pb-4">
-                            <h1 class="text-2xl font-bold">Worksheet: ${topic.split(',')[0]}</h1>
+                            <h1 class="text-2xl font-bold">${title}</h1>
                             <div class="text-sm"><strong>Name:</strong> _________________________</div>
                         </div>
                         <div class="prose max-w-none mt-4">${worksheetContent.replace(/## /g, '<h3 class="text-lg font-semibold mt-6 mb-2">').replace(/\n/g, '<br>')}</div>
@@ -675,7 +695,7 @@
                         <div class="flex justify-between items-center mb-6 print:hidden">
                             <h2 class="text-2xl font-bold text-gray-800">Generated Worksheet</h2>
                             <div class="flex space-x-2">
-                                <button data-action="download" data-filename="Worksheet - ${topic.split(',')[0].replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="download" data-filename="Worksheet - ${title.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
                                 <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
                         </div>
