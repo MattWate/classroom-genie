@@ -24,6 +24,17 @@
         }
         .prose { max-width: 65ch; }
         .prose-sm { font-size: 0.875rem; line-height: 1.5; }
+        .worksheet-image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            min-height: 150px;
+            background-color: #f9fafb;
+            color: #6b7280;
+            margin: 1rem 0;
+        }
         @media print {
             body * { visibility: hidden; }
             #printable-plan, #printable-plan *,
@@ -637,12 +648,22 @@
             try {
                 const text = await fetchWithRetry(prompt, false);
                 
-                const worksheetContent = text.split('## Answer Key')[0] || '';
+                let worksheetContent = text.split('## Answer Key')[0] || '';
                 const answerKeyContent = text.split('## Answer Key')[1] || 'No answer key provided.';
 
+                // Replace placeholders with styled divs
+                worksheetContent = worksheetContent.replace(/\[(.*?)\]/g, (match, p1) => {
+                    return `<div class="worksheet-image-placeholder my-4"><i data-lucide="image" class="h-6 w-6 mr-2"></i>${p1}</div>`;
+                });
+
                 const printableContent = `
-                    <h1 class="text-3xl font-bold text-center">Worksheet: ${topic.split(',')[0]}</h1>
-                    <div class="prose max-w-none">${worksheetContent.replace(/## /g, '<h3>').replace(/\n/g, '<br>')}</div>
+                    <div class="p-6 border rounded-lg bg-white">
+                        <div class="flex justify-between items-center border-b pb-4">
+                            <h1 class="text-2xl font-bold">Worksheet: ${topic.split(',')[0]}</h1>
+                            <div class="text-sm"><strong>Name:</strong> _________________________</div>
+                        </div>
+                        <div class="prose max-w-none mt-4">${worksheetContent.replace(/## /g, '<h3 class="text-lg font-semibold mt-6 mb-2">').replace(/\n/g, '<br>')}</div>
+                    </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid mt-6">
                         <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
                         <div class="prose prose-sm max-w-none text-gray-600">${answerKeyContent.replace(/\n/g, '<br>')}</div>
@@ -658,7 +679,7 @@
                                 <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
                             </div>
                         </div>
-                        <div id="printable-worksheet" class="p-4 border rounded-lg bg-white">${printableContent}</div>
+                        <div id="printable-worksheet">${printableContent}</div>
                     </div>`;
                 lucide.createIcons();
 
