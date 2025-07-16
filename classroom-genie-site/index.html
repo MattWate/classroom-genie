@@ -351,14 +351,18 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ prompt, isJson, requestType })
                 });
-                if (!response.ok) throw new Error(`API request failed with status ${response.status}`);
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
                 
                 const result = await response.json();
 
                 if (requestType === 'image') {
-                    const imageUrl = `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
-                    if (!imageUrl) throw new Error("Image generation failed.");
-                    return imageUrl;
+                    if (!result.predictions || !result.predictions[0] || !result.predictions[0].bytesBase64Encoded) {
+                         throw new Error("Image generation failed or returned invalid data.");
+                    }
+                    return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
                 }
                 
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
