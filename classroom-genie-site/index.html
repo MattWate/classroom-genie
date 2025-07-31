@@ -1,519 +1,875 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { supabase } from './supabaseClient.js'; // <-- CORRECTED IMPORT PATH
-
-// --- UI Components ---
-
-const Header = ({ user, onLogout, onNavigate }) => (
-  <header className="bg-transparent sticky top-0 z-50">
-    <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-      <h1 className="text-2xl font-bold leading-tight text-white cursor-pointer" onClick={() => onNavigate(user ? 'dashboard' : 'home')}>So What <span className="text-[#EDC8FF]">AI</span></h1>
-      <div className="flex items-center space-x-4">
-        {user ? (
-          <button onClick={onLogout} className="text-sm font-medium text-gray-300 hover:text-white">
-            Logout
-          </button>
-        ) : (
-          <>
-            <button onClick={() => onNavigate('login')} className="text-sm font-medium text-gray-300 hover:text-white">Log In</button>
-            <button onClick={() => onNavigate('login')} className="px-4 py-2 text-sm font-medium text-black bg-[#EDC8FF] rounded-md hover:bg-purple-200 transition-colors">
-              Start Free Trial
-            </button>
-          </>
-        )}
-      </div>
-    </div>
-  </header>
-);
-
-const Footer = () => (
-    <footer className="bg-transparent mt-12"><div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 text-center text-sm text-gray-500"><p>&copy; 2025 So What AI.</p></div></footer>
-);
-
-// --- Page 1: Home Page ---
-const HomePage = ({ onNavigate }) => (
-    <div className="text-center py-16 sm:py-24">
-        <h1 className="text-5xl sm:text-7xl font-extrabold text-white tracking-tight">
-            From <span className="text-[#EDC8FF]">Data</span> to <span className="text-[#13BBAF]">'So What?'</span>,
-            <br />
-            Instantly.
-        </h1>
-        <p className="mt-6 text-lg text-gray-300 max-w-2xl mx-auto">
-            The all-in-one research platform for UX & CX professionals. Aggregate feedback, analyse sentiment, and share actionable insights with your team, faster than ever before.
-        </p>
-        <div className="mt-10 flex items-center justify-center gap-x-6">
-            <button onClick={() => onNavigate('login')} className="px-6 py-3 text-base font-semibold text-black bg-[#EDC8FF] rounded-md shadow-lg hover:bg-purple-200 transition-colors transform hover:scale-105">
-                Get Started for Free
-            </button>
-        </div>
-        <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-            <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Mixed-Method Analysis</h3>
-                <p className="mt-2 text-gray-400">Combine interview transcripts (.txt, .docx) with survey data (.csv, .xlsx) in a single, unified project.</p>
-            </div>
-            <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                <h3 className="text-lg font-semibold text-white">AI-Powered Synthesis</h3>
-                <p className="mt-2 text-gray-400">Leverage AI to generate narrative overviews, key themes, and actionable "So What?" recommendations automatically.</p>
-            </div>
-            <div className="p-6 bg-gray-800/50 rounded-lg border border-gray-700">
-                <h3 className="text-lg font-semibold text-white">Interactive Reports</h3>
-                <p className="mt-2 text-gray-400">Explore your findings with interactive charts and downloadable reports, ready for your stakeholders.</p>
-            </div>
-        </div>
-    </div>
-);
-
-// --- Page 2: Login/Signup Page ---
-const LoginPage = ({ onLogin, onNavigate }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError(null);
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-            setError(error.message);
-        } else {
-            onLogin(data.user);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Classroom Genie</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Poppins -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- FileSaver.js for downloading files -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <!-- html-to-docx for Word document generation -->
+    <script src="https://unpkg.com/html-to-docx@1.8.0/dist/html-to-docx.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(to bottom, #fbe9f2, #f8fafc);
         }
-        setIsSubmitting(false);
-    };
-    
-    const handleSignUp = async (e) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        setError(null);
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) {
-            setError(error.message);
-        } else {
-            onLogin(data.user);
+        .prose { max-width: 65ch; }
+        .prose-sm { font-size: 0.875rem; line-height: 1.5; }
+        @media print {
+            body * { visibility: hidden; }
+            #printable-plan, #printable-plan *,
+            #printable-report, #printable-report *,
+            #printable-test, #printable-test * { visibility: visible; }
+            #printable-plan, #printable-report, #printable-test {
+                position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; border: none;
+            }
+            .print-only-title { display: block !important; text-align: center; margin-bottom: 2rem; }
         }
-        setIsSubmitting(false);
-    };
-
-    return (
-         <div className="bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg shadow-2xl p-8 max-w-md mx-auto">
-            <button onClick={() => onNavigate('home')} className="text-sm font-medium text-[#13BBAF] hover:text-teal-400 mb-4">&larr; Back to home</button>
-            <h2 className="text-2xl font-bold text-white text-center">Welcome</h2>
-            <form className="mt-6 space-y-6">
+    </style>
+</head>
+<body>
+    <div class="min-h-screen">
+        <div class="md:flex">
+            <!-- Sidebar Navigation -->
+            <aside id="sidebar" class="w-full md:w-64 bg-white p-4 md:h-screen md:sticky top-0 border-r border-gray-200 print:hidden flex flex-col">
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-300">Email address</label>
-                    <input type="email" id="email" value={email} onChange={(e) => setEmail(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-[#13BBAF] focus:border-[#13BBAF]" />
-                </div>
-                 <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-300">Password</label>
-                    <input type="password" id="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-md text-white shadow-sm focus:outline-none focus:ring-[#13BBAF] focus:border-[#13BBAF]" />
-                </div>
-                {error && <p className="text-red-400 text-sm">{error}</p>}
-                <div className="flex items-center justify-end space-x-4">
-                    <button onClick={handleLogin} disabled={isSubmitting} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-500">
-                        {isSubmitting ? 'Signing in...' : 'Sign In'}
-                    </button>
-                    <button onClick={handleSignUp} disabled={isSubmitting} className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#13BBAF] hover:bg-teal-600">
-                        {isSubmitting ? 'Signing up...' : 'Sign Up'}
-                    </button>
-                </div>
-            </form>
-         </div>
-    );
-};
-
-// --- Page 3: Dashboard ---
-const DashboardPage = ({ user, onNavigate }) => {
-    const [projects, setProjects] = useState([]); 
-
-    return (
-        <div className="space-y-8">
-            <div>
-                <h2 className="text-3xl font-bold text-white">Welcome back, {user?.email.split('@')[0]}</h2>
-                <p className="text-gray-400 mt-1">Ready to find the "So What?" in your data?</p>
-            </div>
-            <button onClick={() => onNavigate('app')} className="w-full md:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-black bg-[#EDC8FF] hover:bg-purple-200 transition-colors transform hover:scale-105">
-                + Create New Project
-            </button>
-            <hr className="border-gray-700/50" />
-            <div>
-                <h3 className="text-2xl font-semibold text-white mb-4">Your Projects</h3>
-                {projects.length === 0 ? (
-                    <div className="text-center py-12 bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m-9 1V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-                        <h4 className="mt-4 text-lg font-semibold text-white">No projects yet</h4>
-                        <p className="mt-1 text-sm text-gray-400">Click "Create New Project" to get started.</p>
+                    <div class="flex items-center mb-8">
+                        <i data-lucide="brain-circuit" class="h-8 w-8 text-purple-500"></i>
+                        <h1 class="ml-2 text-xl font-bold text-gray-800">Classroom Genie</h1>
                     </div>
-                ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* This is where you would map over your real projects */}
-                    </div>
-                )}
-            </div>
+                    <nav id="sidebar-nav" class="space-y-2"></nav>
+                </div>
+                <div id="language-selector-wrapper" class="mt-auto pt-4 hidden">
+                     <label for="language-select" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                     <select id="language-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
+                         <option value="US" selected>US English</option>
+                         <option value="UK">UK English</option>
+                     </select>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main id="main-content" class="flex-1 p-4 md:p-8"></main>
         </div>
-    );
-};
+    </div>
 
-
-// --- Sub-components for the AnalysisToolPage ---
-
-const FileUploadPage = ({ dataSet, setDataSet, onNext, onDashboardNavigate }) => {
-    const fileInputRef = useRef(null);
-    
-    const handleFileChange = (event) => {
-        const files = event.target.files;
-        if (!files || files.length === 0) return;
-
-        const filePromises = Array.from(files).map(file => {
-            return new Promise((resolve) => {
-                const fileId = Date.now() + file.name;
-                if (file.name.endsWith('.txt')) {
-                    const reader = new FileReader();
-                    reader.onload = (e) => resolve({ id: fileId, name: file.name, type: 'text', content: e.target.result });
-                    reader.readAsText(file);
-                } else if (file.name.endsWith('.docx') || file.name.endsWith('.doc')) {
-                    if (window.mammoth) {
-                        const reader = new FileReader();
-                        reader.onload = (e) => {
-                            window.mammoth.extractRawText({ arrayBuffer: e.target.result })
-                                .then(result => resolve({ id: fileId, name: file.name, type: 'text', content: result.value }))
-                                .catch(() => resolve(null));
-                        };
-                        reader.readAsArrayBuffer(file);
-                    } else { resolve(null); }
-                } else if (file.name.endsWith('.csv') || file.name.endsWith('.xlsx')) {
-                    resolve({ id: fileId, name: file.name, type: 'spreadsheet', fileObject: file, mappings: {}, rows: [], headers: [] });
-                } else {
-                    resolve(null);
-                }
-            });
-        });
-
-        Promise.all(filePromises).then(newFiles => {
-            setDataSet(prev => [...prev, ...newFiles.filter(Boolean)]);
-        });
-
-        event.target.value = null;
-    };
-    
-    return (<div className="bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg shadow-2xl p-6 space-y-6"><button onClick={onDashboardNavigate} className="text-sm font-medium text-[#13BBAF] hover:text-teal-400">&larr; Back to Dashboard</button><div className="flex justify-between items-center"><div><h2 className="text-2xl font-semibold text-white">Step 1: Build Your Data Set</h2><p className="text-sm text-gray-400">Add all your project files (.txt, .docx, .csv, .xlsx).</p></div>{dataSet.length > 0 && (<button onClick={() => setDataSet([])} className="inline-flex items-center px-3 py-2 border border-red-500/50 shadow-sm text-sm font-medium rounded-md text-red-400 bg-gray-800 hover:bg-gray-700">Clear Data Set</button>)}</div><div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-8 text-center"><input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".txt,.csv,.xlsx,.doc,.docx" className="hidden" multiple /><button onClick={() => fileInputRef.current.click()} className="inline-flex items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600 transition-colors"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Add File(s)</button></div><div><h3 className="font-semibold text-lg text-white">Files in Your Data Set:</h3><div className="mt-2 space-y-2">{dataSet.map(file => <p key={file.id} className="p-2 bg-gray-800/70 text-gray-300 rounded-md truncate">{file.name}</p>)}{dataSet.length === 0 && <p className="text-gray-500">No files uploaded.</p>}</div></div><div className="pt-5"><div className="flex justify-end"><button onClick={onNext} disabled={dataSet.length === 0} className="w-full md:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-gradient-to-r from-[#13BBAF] to-teal-500 hover:from-teal-500 hover:to-teal-400 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-500 disabled:from-gray-600 disabled:to-gray-700 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105">Next: Configure Data</button></div></div></div>);
-};
-
-const MappingModal = ({ file, onClose, onSave }) => {
-    const [parsedData, setParsedData] = useState({ headers: [], rows: [] });
-    const [columnMappings, setColumnMappings] = useState(file.mappings || {});
-    const [isLoading, setIsLoading] = useState(true);
-
-    const detectColumnType = (header, rows) => {
-        const values = rows.map(r => r[header]).filter(Boolean).slice(0, 10);
-        if (values.length === 0) return 'ignore';
-        const allAreNumbers = values.every(v => !isNaN(Number(v)));
-        if (allAreNumbers) return 'stats';
-        const uniqueValues = new Set(values);
-        if (uniqueValues.size <= 5 || uniqueValues.size / values.length < 0.5) return 'category';
-        const averageLength = values.reduce((acc, v) => acc + String(v).length, 0) / values.length;
-        if (averageLength > 30) return 'text';
-        return 'ignore';
-    };
-    
-    useEffect(() => {
-        const processData = (data) => {
-            const headers = Object.keys(data[0] || {});
-            setParsedData({ headers, rows: data });
-            
-            const initialMappings = { ...file.mappings };
-            if (Object.keys(initialMappings).length === 0) {
-                headers.forEach(header => {
-                    initialMappings[header] = detectColumnType(header, data);
-                });
-            }
-            setColumnMappings(initialMappings);
-            setIsLoading(false);
+    <script>
+        // --- STATE MANAGEMENT ---
+        const state = {
+            activeTab: 'home',
+            reportFileContent: '',
+            language: 'US',
+            uploadedImageBase64: null
         };
+        const mainContent = document.getElementById('main-content');
+        const sidebarNav = document.getElementById('sidebar-nav');
+        const languageSelector = document.getElementById('language-selector-wrapper');
 
-        if (file.fileObject.name.endsWith('.csv')) {
-            window.Papa.parse(file.fileObject, { header: true, skipEmptyLines: true, complete: (results) => processData(results.data) });
-        } else {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const data = new Uint8Array(e.target.result);
-                const workbook = window.XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const json = window.XLSX.utils.sheet_to_json(worksheet);
-                processData(json);
+        // --- TEMPLATES / VIEWS ---
+        const homePageTemplate = `
+            <div class="max-w-4xl mx-auto text-center">
+                 <div class="bg-white p-8 md:p-12 rounded-xl shadow-xl border-t-4 border-purple-500">
+                    <i data-lucide="sparkles" class="mx-auto h-16 w-16 text-purple-400"></i>
+                    <h1 class="mt-4 text-4xl md:text-5xl font-bold text-gray-800">Welcome to Classroom Genie</h1>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Your AI-powered assistant for teaching and learning. Choose your path to get started.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+                    <div data-nav-link="teacherHub" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-purple-400">
+                        <i data-lucide="briefcase" class="h-12 w-12 text-purple-500 mb-4 mx-auto"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">For Teachers</h2>
+                        <p class="mt-2 text-gray-600">Create lesson plans, reports, and tests in minutes.</p>
+                    </div>
+                    <div data-nav-link="parentHub" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-green-400">
+                        <i data-lucide="users" class="h-12 w-12 text-green-500 mb-4 mx-auto"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">For Parents & Learners</h2>
+                        <p class="mt-2 text-gray-600">Get help with homework, revise topics, and practice for tests.</p>
+                    </div>
+                </div>
+            </div>`;
+        
+        const teacherHubTemplate = `
+            <div class="max-w-4xl mx-auto">
+                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 text-left">
+                    <h1 class="text-3xl font-bold text-gray-800">Teacher Tools</h1>
+                    <p class="mt-2 text-gray-600">AI-powered tools to streamline your planning and administrative tasks.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+                    <div data-nav-link="lessonPlanner" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-purple-400">
+                        <i data-lucide="book-open" class="h-12 w-12 text-purple-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Lesson Plan Creator</h2>
+                        <p class="mt-2 text-gray-600">Generate detailed, engaging lesson plans with web resources.</p>
+                    </div>
+                    <div data-nav-link="reportWriter" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-orange-400">
+                        <i data-lucide="file-text" class="h-12 w-12 text-orange-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Report Writer</h2>
+                        <p class="mt-2 text-gray-600">Create comprehensive school reports from student marks.</p>
+                    </div>
+                    <div data-nav-link="testCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400 md:col-span-2">
+                        <i data-lucide="file-check" class="h-12 w-12 text-blue-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Revision Test Creator</h2>
+                        <p class="mt-2 text-gray-600">Design revision tests with multiple question types.</p>
+                    </div>
+                </div>
+            </div>`;
+
+        const parentHubTemplate = `
+             <div class="max-w-4xl mx-auto">
+                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 text-left">
+                    <h1 class="text-3xl font-bold text-gray-800">Parent & Learner Tools</h1>
+                    <p class="mt-2 text-gray-600">Get AI-powered help with homework and revision.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+                    <div data-nav-link="homeworkHelper" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-red-400">
+                        <i data-lucide="life-buoy" class="h-12 w-12 text-red-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Help me with my homework</h2>
+                        <p class="mt-2 text-gray-600">Upload a photo of a worksheet to get hints, explanations, and check your answers.</p>
+                    </div>
+                    <div data-nav-link="learningHub" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-indigo-400">
+                        <i data-lucide="book-marked" class="h-12 w-12 text-indigo-500 mb-4"></i>
+                        <h2 class="text-2xl font-bold text-gray-800">Help me learn</h2>
+                        <p class="mt-2 text-gray-600">Enter a topic or upload a photo to get revision notes and a practice test.</p>
+                    </div>
+                </div>
+            </div>`;
+        
+        const homeworkHelperTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Homework Helper</h2>
+                    <p class="text-gray-500 mb-8">Upload a photo of your worksheet to get started.</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Upload Worksheet Photo</label>
+                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                            <div class="space-y-1 text-center">
+                                <i data-lucide="camera" class="mx-auto h-12 w-12 text-gray-400"></i>
+                                <div class="flex text-sm text-gray-600">
+                                    <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
+                                </div>
+                                <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                            </div>
+                        </div>
+                        <div id="image-preview-wrapper" class="hidden mt-4">
+                            <img id="image-preview" class="rounded-lg max-h-64 mx-auto" />
+                            <button id="remove-image-btn" class="mt-2 mx-auto flex items-center text-sm text-red-600 hover:text-red-800"><i data-lucide="x" class="h-4 w-4 mr-1"></i>Remove image</button>
+                        </div>
+                    </div>
+                    <button id="generate-homework-help-btn" class="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 flex items-center justify-center disabled:bg-purple-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Get Help</button>
+                    <div id="hh-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                </div>
+                <div id="hh-output" class="mt-8"></div>
+            </div>`;
+
+        const learningHubTemplate = `
+             <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Learning Hub</h2>
+                    <p class="text-gray-500 mb-8">Describe a topic or upload a photo to get revision notes and a practice test.</p>
+                     <div class="space-y-6">
+                        <div>
+                            <label for="learn-topic" class="block text-sm font-medium text-gray-700 mb-1">What do you want to learn about?</label>
+                            <textarea id="learn-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The planets in our solar system"></textarea>
+                        </div>
+                        <div class="text-center text-sm text-gray-500">OR</div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload a Photo (optional)</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                <div class="space-y-1 text-center">
+                                    <i data-lucide="camera" class="mx-auto h-12 w-12 text-gray-400"></i>
+                                    <div class="flex text-sm text-gray-600">
+                                        <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="image-preview-wrapper" class="hidden mt-4">
+                                <img id="image-preview" class="rounded-lg max-h-64 mx-auto" />
+                                <button id="remove-image-btn" class="mt-2 mx-auto flex items-center text-sm text-red-600 hover:text-red-800"><i data-lucide="x" class="h-4 w-4 mr-1"></i>Remove image</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="generate-learning-help-btn" class="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 flex items-center justify-center disabled:bg-purple-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Help Me Learn</button>
+                    <div id="lh-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                </div>
+                <div id="lh-output" class="mt-8"></div>
+            </div>`;
+        
+        const lessonPlannerTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Lesson Plan Creator</h2>
+                    <p class="text-gray-500 mb-8">Design engaging lesson plans with AI-suggested web resources.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="md:col-span-2"><label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label><input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The Water Cycle"></div>
+                        <div>
+                            <label for="duration-select" class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                            <select id="duration-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
+                                <option value="20">20 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="45" selected>45 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div id="custom-duration-wrapper" class="hidden">
+                            <label for="duration-custom" class="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+                            <input type="number" id="duration-custom" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                        </div>
+                        <div class="md:col-span-2"><label for="objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label><textarea id="objectives" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., Students will be able to name the stages of the water cycle."></textarea></div>
+                    </div>
+                    <button id="generate-plan-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan</button>
+                    <div id="lp-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
+                </div>
+                <div id="lp-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your masterpiece awaits!</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to create your lesson plan.</p>
+                    </div>
+                </div>
+            </div>`;
+
+        const reportWriterTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Report Writer</h2>
+                    <p class="text-gray-500 mb-8">Generate student reports from marks and your insights.</p>
+                    <div class="space-y-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Marks</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i><div class="flex text-sm text-gray-600"><label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"><span>Upload a file</span><input id="file-upload" type="file" class="sr-only" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PDF, Excel, CSV, Word up to 10MB</p></div></div>
+                            <div id="file-info" class="hidden items-center justify-between bg-gray-100 p-2 rounded-lg mt-2">
+                                <span id="file-name" class="text-sm text-gray-700 truncate"></span>
+                                <button id="remove-file-btn" class="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors">
+                                    <i data-lucide="x" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Student's Name</label><input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., Jane Doe"></div>
+                        <div><label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments for Narrative Report</label><p class="text-sm text-gray-500 mb-2">Highly recommended. Adding your own insights helps the AI write a much richer, more personalized report.</p><textarea id="comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., 'Shows great enthusiasm...'"></textarea></div>
+                    </div>
+                    <button id="generate-report-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report</button>
+                    <div id="rw-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                </div>
+                <div id="rw-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your report will appear here.</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to get started.</p>
+                    </div>
+                </div>
+            </div>`;
+        
+        const testCreatorTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Revision Test Creator</h2>
+                    <p class="text-gray-500 mb-8">Generate a revision test with various question types for any topic.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="md:col-span-2">
+                            <label for="test-topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                            <textarea id="test-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The Roman Empire, including the rise and fall, key emperors, and major architectural achievements."></textarea>
+                        </div>
+                        <div class="flex items-end space-x-4">
+                            <div>
+                                <label for="num-questions-select" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
+                                <select id="num-questions-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
+                                    <option value="10" selected>10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div id="custom-questions-wrapper" class="hidden flex-1">
+                                <label for="num-questions-custom" class="block text-sm font-medium text-gray-700 mb-1">Custom</label>
+                                <input type="number" id="num-questions-custom" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Question Types</label>
+                            <div class="space-y-2 mt-2">
+                                <label class="flex items-center"><input type="checkbox" id="qt-mcq" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500" checked> <span class="ml-2 text-sm text-gray-700">Multiple Choice</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-tf" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"> <span class="ml-2 text-sm text-gray-700">True/False</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-short" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"> <span class="ml-2 text-sm text-gray-700">Short Answer</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="generate-test-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test</button>
+                    <div id="tc-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
+                </div>
+                <div id="tc-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your test will appear here.</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to create a revision test.</p>
+                    </div>
+                </div>
+            </div>`;
+
+        // --- RENDER & NAVIGATION ---
+        function render() {
+            const templates = {
+                home: homePageTemplate,
+                teacherHub: teacherHubTemplate,
+                parentHub: parentHubTemplate,
+                lessonPlanner: lessonPlannerTemplate,
+                reportWriter: reportWriterTemplate,
+                testCreator: testCreatorTemplate,
+                homeworkHelper: homeworkHelperTemplate,
+                learningHub: learningHubTemplate,
             };
-            reader.readAsArrayBuffer(file.fileObject);
+            mainContent.innerHTML = templates[state.activeTab] || homePageTemplate;
+            updateSidebar();
+            lucide.createIcons();
         }
-    }, [file]);
 
-    const handleSave = () => {
-        onSave(file.id, columnMappings, parsedData);
-        onClose();
-    };
+        function updateSidebar() {
+            const homeNav = `<button data-nav-link="home" class="nav-link flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg"><i data-lucide="home" class="h-5 w-5"></i><span class="ml-3">Home</span></button>`;
+            const teacherNav = `
+                <button data-nav-link="teacherHub" class="nav-link flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg"><i data-lucide="briefcase" class="h-5 w-5"></i><span class="ml-3">Teacher Tools</span></button>
+                <button data-nav-link="lessonPlanner" class="nav-link flex items-center w-full pl-10 pr-4 py-2 text-sm font-medium rounded-lg"><i data-lucide="book-open" class="h-5 w-5"></i><span class="ml-3">Lesson Planner</span></button>
+                <button data-nav-link="reportWriter" class="nav-link flex items-center w-full pl-10 pr-4 py-2 text-sm font-medium rounded-lg"><i data-lucide="file-text" class="h-5 w-5"></i><span class="ml-3">Report Writer</span></button>
+                <button data-nav-link="testCreator" class="nav-link flex items-center w-full pl-10 pr-4 py-2 text-sm font-medium rounded-lg"><i data-lucide="file-check" class="h-5 w-5"></i><span class="ml-3">Test Creator</span></button>
+            `;
+            const parentNav = `
+                <button data-nav-link="parentHub" class="nav-link flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg"><i data-lucide="users" class="h-5 w-5"></i><span class="ml-3">Parent & Learner</span></button>
+                <button data-nav-link="homeworkHelper" class="nav-link flex items-center w-full pl-10 pr-4 py-2 text-sm font-medium rounded-lg"><i data-lucide="life-buoy" class="h-5 w-5"></i><span class="ml-3">Homework Helper</span></button>
+                <button data-nav-link="learningHub" class="nav-link flex items-center w-full pl-10 pr-4 py-2 text-sm font-medium rounded-lg"><i data-lucide="book-marked" class="h-5 w-5"></i><span class="ml-3">Learning Hub</span></button>
+            `;
 
-    return (<div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50 p-4"><div className="bg-gray-800 text-white rounded-lg shadow-xl p-6 space-y-4 w-full max-w-lg"><h3 className="text-lg font-semibold">Map Columns for: {file.name}</h3>{isLoading ? <p>Loading spreadsheet...</p> : (<div className="space-y-2 max-h-96 overflow-y-auto p-1">{parsedData.headers.map(header => (<div key={header} className="grid grid-cols-2 gap-4 items-center"><label className="font-medium truncate">{header}</label><select value={columnMappings[header]} onChange={(e) => setColumnMappings(prev => ({...prev, [header]: e.target.value}))} className="rounded-md border-gray-600 bg-gray-700 text-white"><option value="ignore">Ignore</option><option value="text">Analyse for Themes</option><option value="stats">Calculate Statistics</option><option value="category">Categorise</option></select></div>))}</div>)}<div className="flex justify-end space-x-3 pt-4"><button onClick={onClose} className="px-4 py-2 bg-gray-600 rounded-md">Cancel</button><button onClick={handleSave} className="px-4 py-2 bg-[#13BBAF] text-white rounded-md">Save Mappings</button></div></div></div>);
-};
+            const isTeacherTool = ['teacherHub', 'lessonPlanner', 'reportWriter', 'testCreator'].includes(state.activeTab);
+            const isParentTool = ['parentHub', 'homeworkHelper', 'learningHub'].includes(state.activeTab);
 
-const ConfigurationPage = ({ dataSet, setDataSet, onAnalyze, onBack, error }) => {
-    const [modalFileId, setModalFileId] = useState(null);
-    const [researchQuestion, setResearchQuestion] = useState('');
-    const [isDataReady, setIsDataReady] = useState(false);
-
-    const handleMappingsUpdate = (fileId, newMappings, parsedData) => { setDataSet(prevDataSet => prevDataSet.map(file => file.id === fileId ? { ...file, mappings: newMappings, ...parsedData } : file)); };
-    const modalFile = dataSet.find(f => f.id === modalFileId);
-
-    useEffect(() => {
-        const checkLibraries = () => {
-            if (window.Papa && window.XLSX && window.mammoth) {
-                setIsDataReady(true);
-            } else {
-                setTimeout(checkLibraries, 100);
+            if (isTeacherTool) {
+                sidebarNav.innerHTML = homeNav + teacherNav + parentNav;
+                languageSelector.classList.remove('hidden');
+            } else if (isParentTool) {
+                sidebarNav.innerHTML = homeNav + teacherNav + parentNav;
+                languageSelector.classList.add('hidden');
+            } else { // Home page
+                sidebarNav.innerHTML = teacherNav + parentNav;
+                languageSelector.classList.add('hidden');
             }
-        };
-        checkLibraries();
-    }, []);
+            
+            // Highlight active link
+            document.querySelectorAll('.nav-link').forEach(link => {
+                const linkTab = link.dataset.navLink;
+                const isActive = (linkTab === state.activeTab) || 
+                                 (linkTab === 'teacherHub' && isTeacherTool) || 
+                                 (linkTab === 'parentHub' && isParentTool);
 
-    return (<div className="bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg shadow-2xl p-6 space-y-6"><button onClick={onBack} className="text-sm font-medium text-[#13BBAF] hover:text-teal-400">&larr; Back to upload</button><div><h2 className="text-2xl font-semibold text-white">Step 2: Configure Your Data Set</h2><p className="text-sm text-gray-400">Map columns for each spreadsheet and provide your research question.</p></div><div><label htmlFor="research-question" className="block text-lg font-semibold text-white">Research Question</label><div className="mt-1"><textarea id="research-question" rows={3} className="shadow-sm focus:ring-[#13BBAF] focus:border-[#13BBAF] block w-full sm:text-sm border-gray-600 bg-gray-800 text-white rounded-md p-2" placeholder="e.g., How do our power-users feel about the new interface performance?" value={researchQuestion} onChange={(e) => setResearchQuestion(e.target.value)} /></div></div>
-    
-    {isDataReady ? (
-        <div className="space-y-3">
-            <h3 className="font-semibold text-lg text-white">Configure Your Data:</h3>
-            {dataSet.map(file => (<div key={file.id} className="flex items-center justify-between p-3 bg-gray-800/70 rounded-md"><span className="font-medium text-gray-300 truncate">{file.name}</span>{file.type === 'spreadsheet' && (<button onClick={() => setModalFileId(file.id)} className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#13BBAF] hover:bg-teal-600 transition-colors">Map Columns</button>)}{file.type === 'text' && (<span className="text-sm text-green-400">Ready to Analyse</span>)}</div>))}
-        </div>
-    ) : (
-        <div className="text-center text-gray-400 p-8 bg-gray-800/50 rounded-md">
-            <div className="animate-pulse">Preparing Data Set...</div>
-        </div>
-    )}
-
-    <div className="pt-5"><div className="flex justify-end"><button onClick={() => onAnalyze(researchQuestion)} className="w-full md:w-auto inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors transform hover:scale-105">Analyse Full Data Set</button></div>{error && <p className="text-red-400 text-sm mt-4 text-right">{error}</p>}</div>{modalFile && (<MappingModal file={modalFile} onClose={() => setModalFileId(null)} onSave={handleMappingsUpdate} />)}</div>);
-};
-
-const AnalysisReportPage = ({ dataSet, onBack, results, onDownload }) => {
-    const { narrativeOverview, themes, sentiment, sentimentDistribution, verbatimQuotes, quantitativeResults, researchQuestion, soWhatActions = [] } = results;
-    const DataSetOverview = ({ dataSet }) => { const textFilesCount = dataSet.filter(f => f.type === 'text').length; const spreadsheets = dataSet.filter(f => f.type === 'spreadsheet'); const spreadsheetRowsCount = spreadsheets.reduce((acc, file) => acc + (file.rows?.length || 0), 0); return (<div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm mb-6"><h3 className="text-lg font-semibold text-white mb-3">Data Set Overview</h3><div className="flex space-x-8">{textFilesCount > 0 && (<div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#13BBAF] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg><div><p className="text-2xl font-bold text-white">{textFilesCount}</p><p className="text-sm text-gray-400">Text Documents</p></div></div>)}{spreadsheets.length > 0 && (<div className="flex items-center"><svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-[#13BBAF] mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg><div><p className="text-2xl font-bold text-white">{spreadsheetRowsCount}</p><p className="text-sm text-gray-400">Survey Responses</p></div></div>)}</div></div>); };
-    const ResearchQuestionDisplay = ({ question }) => (<div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm mb-6"><h3 className="text-lg font-semibold text-white">Research Question</h3><p className="mt-2 text-gray-300 italic">"{question}"</p></div>);
-    const SentimentDonutChart = ({ distribution }) => { const { positive, negative, neutral } = distribution; const conicGradient = `conic-gradient(#ef4444 0% ${negative}%, #84cc16 ${negative}% ${negative + positive}%, #95A3A6 ${negative + positive}% 100%)`; return (<div className="flex flex-col items-center"><div style={{ background: conicGradient }} className="w-32 h-32 rounded-full flex items-center justify-center"><div className="w-20 h-20 bg-[#3C4142] rounded-full"></div></div><div className="flex justify-center space-x-4 mt-4 text-sm"><div className="flex items-center"><span className="w-3 h-3 rounded-full bg-red-500 mr-2"></span>Negative ({negative}%)</div><div className="flex items-center"><span className="w-3 h-3 rounded-full bg-lime-500 mr-2"></span>Positive ({positive}%)</div><div className="flex items-center"><span className="w-3 h-3 rounded-full bg-[#95A3A6] mr-2"></span>Neutral ({neutral}%)</div></div></div>); };
-    const SentimentSection = ({ sentiment, distribution }) => { const sentimentStyles = { Positive: { bgColor: 'bg-green-900/50', textColor: 'text-green-300', borderColor: 'border-green-500/30', emoji: '😊', label: 'Positive' }, Negative: { bgColor: 'bg-red-900/50', textColor: 'text-red-300', borderColor: 'border-red-500/30', emoji: '😞', label: 'Negative' }, Neutral: { bgColor: 'bg-gray-700', textColor: 'text-gray-300', borderColor: 'border-gray-600', emoji: '😐', label: 'Neutral' } }; const styles = sentimentStyles[sentiment] || sentimentStyles['Neutral']; return (<div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"><h3 className="text-lg font-semibold text-white mb-4 text-center">Overall Sentiment</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center"><div className={`p-4 rounded-lg border ${styles.borderColor} ${styles.bgColor}`}><div className="flex items-center justify-center"><span className="text-5xl mr-4">{styles.emoji}</span><span className={`text-3xl font-bold ${styles.textColor}`}>{styles.label}</span></div></div><SentimentDonutChart distribution={distribution} /></div></div>); };
-    const NarrativeOverviewDisplay = ({ narrative }) => (<div className="p-5 rounded-lg border border-purple-500/20 bg-purple-900/20 backdrop-blur-sm"><h3 className="text-xl font-semibold text-white mb-2">Overview</h3><p className="text-gray-300 leading-relaxed text-base">{narrative}</p></div>);
-    const SoWhatDisplay = ({ actions }) => ( actions && actions.length > 0 && <div className="p-5 rounded-lg border border-teal-500/20 bg-teal-900/20 backdrop-blur-sm"><h3 className="text-xl font-semibold text-white mb-3">So What? (Actions & Recommendations)</h3><ul className="list-disc list-inside space-y-2 text-gray-300">{actions.map((action, index) => (<li key={index}>{action}</li>))}</ul></div>);
-    const ThematicAnalysisDisplay = ({ themes }) => ( themes && themes.length > 0 && <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"><h3 className="text-lg font-semibold text-white mb-3">Thematic Analysis</h3><div className="space-y-4 mb-6"><h4 className="font-semibold text-gray-300">Theme Prominence</h4>{themes.map(theme => (<div key={theme.theme} className="w-full"><div className="flex items-center mb-1"><span className="text-lg mr-2">{theme.emoji}</span><span className="text-sm font-medium text-gray-300">{theme.theme}</span></div><div className="w-full bg-gray-700 rounded-full h-4"><div className="bg-green-500 h-4 rounded-full" style={{ width: `${theme.prominence * 10}%` }}></div></div></div>))}</div><hr className="my-6 border-gray-700"/><ul className="space-y-6">{themes.map((item, index) => (<li key={index} className="flex flex-col p-4 bg-gray-900/70 rounded-md shadow-sm"><div className="flex items-center mb-3"><span className="text-2xl mr-4">{item.emoji}</span><span className="text-white font-bold text-lg">{item.theme}</span></div><div className="space-y-3">{item.evidence.map((quote, qIndex) => (<blockquote key={qIndex} className="border-l-4 border-[#13BBAF] pl-4"><p className="text-gray-400 italic">"{quote}"</p></blockquote>))}</div></li>))}</ul></div>);
-    const VerbatimQuotesDisplay = ({ quotes }) => ( quotes && quotes.length > 0 && <div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"><h3 className="text-lg font-semibold text-white mb-3">Key Verbatim Quotes</h3><ul className="space-y-4">{quotes.map((quote, index) => (<li key={index}><blockquote className="relative p-4 text-xl italic border-l-4 bg-gray-900/70 text-gray-300 border-gray-600 quote"><div className="stylistic-quote-mark" aria-hidden="true">&ldquo;</div><p className="mb-4">{quote}</p></blockquote></li>))}</ul></div>);
-    const QuantitativeAnalysisDisplay = ({ quantData }) => { const [isOpen, setIsOpen] = useState(true); if (!quantData || quantData.length === 0) return null; return (<div className="p-4 rounded-lg border border-gray-700 bg-gray-800/50 backdrop-blur-sm"><button onClick={() => setIsOpen(!isOpen)} className="w-full flex justify-between items-center"><h3 className="text-lg font-semibold text-white">Quantitative Analysis</h3><svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg></button>{isOpen && <div className="mt-4 space-y-8">{quantData.map(fileResult => (<div key={fileResult.sourceFile}><h4 className="font-semibold text-gray-200 text-md border-b border-gray-700 pb-2 mb-4">From: {fileResult.sourceFile}</h4><div className="space-y-6">{fileResult.stats.map(stat => (<div key={stat.title}><h5 className="font-semibold text-gray-300">{stat.title}</h5><div className="grid grid-cols-3 gap-4 mt-2 text-center">{stat.error ? (<p className="col-span-3 text-sm text-red-400 bg-red-900/50 p-2 rounded-md">{stat.error}</p>) : (<><div className="bg-gray-700 p-2 rounded-md"><p className="text-sm text-gray-400">Mean</p><p className="text-xl font-bold">{stat.mean ?? '-'}</p></div><div className="bg-gray-700 p-2 rounded-md"><p className="text-sm text-gray-400">Median</p><p className="text-xl font-bold">{stat.median ?? '-'}</p></div><div className="bg-gray-700 p-2 rounded-md"><p className="text-sm text-gray-400">Mode</p><p className="text-xl font-bold">{stat.mode ?? '-'}</p></div></>)}</div></div>))}{fileResult.categories.map(cat => (<CategoryChart key={cat.title} category={cat} />))}</div></div>))}</div>}</div>); };
-    return (<div className="w-full bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg shadow-2xl p-6"><div className="flex justify-between items-center mb-6"><button onClick={onBack} className="inline-flex items-center px-4 py-2 border border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-300 bg-gray-700 hover:bg-gray-600"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>Back to Data Set</button><h2 className="text-2xl font-semibold text-white">Analysis Report</h2><button onClick={() => onDownload(results)} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"><svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>Download Report</button></div><div className="space-y-6"><DataSetOverview dataSet={dataSet} /><ResearchQuestionDisplay question={researchQuestion} /><div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><NarrativeOverviewDisplay narrative={narrativeOverview} /><SoWhatDisplay actions={soWhatActions} /></div><SentimentSection sentiment={sentiment} distribution={sentimentDistribution} /><ThematicAnalysisDisplay themes={themes} /><VerbatimQuotesDisplay quotes={verbatimQuotes} /><QuantitativeAnalysisDisplay quantData={quantitativeResults} /></div></div>);
-};
-
-// --- New Category Chart Component ---
-const CategoryChart = ({ category }) => {
-    const [chartType, setChartType] = useState('donut'); // donut, bar, table
-    const total = category.data.reduce((sum, item) => sum + item.count, 0);
-    const colors = ['#13BBAF', '#EDC8FF', '#84cc16', '#f97316', '#3b82f6'];
-
-    const renderChart = () => {
-        switch (chartType) {
-            case 'bar':
-                const maxCount = Math.max(...category.data.map(i => i.count));
-                return (
-                    <div className="mt-2 space-y-2">
-                        {category.data.map((item, index) => (
-                            <div key={item.name} className="flex items-center"><span className="w-24 text-sm text-gray-400 truncate">{item.name}</span><div className="flex-1 bg-gray-700 rounded-full h-5"><div className="h-5 rounded-full" style={{ width: `${(item.count / maxCount) * 100}%`, backgroundColor: colors[index % colors.length] }}></div></div><span className="ml-2 text-sm font-semibold">{item.count}</span></div>
-                        ))}
-                    </div>
-                );
-            case 'table':
-                return (
-                    <table className="w-full mt-2 text-sm text-left">
-                        <thead className="text-xs text-gray-400 uppercase bg-gray-700/50"><tr><th className="px-4 py-2">Category</th><th className="px-4 py-2">Count</th><th className="px-4 py-2">Percentage</th></tr></thead>
-                        <tbody>{category.data.map((item, index) => (<tr key={item.name} className="border-b border-gray-700"><td className="px-4 py-2">{item.name}</td><td className="px-4 py-2">{item.count}</td><td className="px-4 py-2">{((item.count / total) * 100).toFixed(1)}%</td></tr>))}</tbody>
-                    </table>
-                );
-            case 'donut':
-            default:
-                let accumulated = 0;
-                const conicGradient = category.data.map((item, index) => {
-                    const percentage = (item.count / total) * 100;
-                    const color = colors[index % colors.length];
-                    const start = accumulated;
-                    accumulated += percentage;
-                    const end = accumulated;
-                    return `${color} ${start}% ${end}%`;
-                }).join(', ');
-                return (
-                    <div className="flex flex-col items-center">
-                        <div style={{ background: `conic-gradient(${conicGradient})` }} className="w-32 h-32 rounded-full flex items-center justify-center">
-                            <div className="w-20 h-20 bg-gray-800 rounded-full"></div>
-                        </div>
-                        <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-4 text-sm">
-                            {category.data.map((item, index) => (
-                                <div key={item.name} className="flex items-center"><span className="w-3 h-3 rounded-full mr-2" style={{backgroundColor: colors[index % colors.length]}}></span>{item.name} ({item.count})</div>
-                            ))}
-                        </div>
-                    </div>
-                );
-        }
-    };
-
-    return (
-        <div>
-            <div className="flex justify-between items-center">
-                <h5 className="font-semibold text-gray-300">{category.title}</h5>
-                <div className="flex space-x-1 bg-gray-700 p-1 rounded-md">
-                    <button onClick={() => setChartType('donut')} className={`px-2 py-1 text-xs rounded ${chartType === 'donut' ? 'bg-teal-500 text-white' : 'text-gray-400'}`}>Donut</button>
-                    <button onClick={() => setChartType('bar')} className={`px-2 py-1 text-xs rounded ${chartType === 'bar' ? 'bg-teal-500 text-white' : 'text-gray-400'}`}>Bar</button>
-                    <button onClick={() => setChartType('table')} className={`px-2 py-1 text-xs rounded ${chartType === 'table' ? 'bg-teal-500 text-white' : 'text-gray-400'}`}>Table</button>
-                </div>
-            </div>
-            {renderChart()}
-        </div>
-    );
-};
-
-
-// --- Page 4: The Main Application ---
-const AnalysisToolPage = ({ onNavigate }) => {
-    const [workflowStep, setWorkflowStep] = useState('upload');
-    const [dataSet, setDataSet] = useState([]);
-    const [analysisResults, setAnalysisResults] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-
-    const handleNextStep = () => setWorkflowStep('configure');
-    
-    const handleAnalysis = async (researchQuestion) => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const textFilesContent = dataSet.filter(f => f.type === 'text').map(f => f.content).join('\n\n---\n\n');
-            const spreadsheets = dataSet.filter(f => f.type === 'spreadsheet');
-            let spreadsheetText = '';
-            let quantitativePayload = [];
-
-            spreadsheets.forEach(sheet => {
-                if(sheet.rows && sheet.headers) {
-                    const textColumns = sheet.headers.filter(header => sheet.mappings[header] === 'text');
-                    spreadsheetText += sheet.rows.map(row => textColumns.map(header => row[header]).join(' ')).join('\n');
-                    sheet.headers.forEach(header => {
-                        const mapping = sheet.mappings[header];
-                        if (mapping === 'stats' || mapping === 'category') {
-                            quantitativePayload.push({ title: header, values: sheet.rows.map(row => row[header]).filter(Boolean), mapping, sourceFile: sheet.name });
-                        }
-                    });
+                if (isActive) {
+                    link.classList.add('bg-purple-600', 'text-white', 'shadow-md');
+                    link.classList.remove('text-gray-600', 'hover:bg-gray-100');
+                } else {
+                    link.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
+                    link.classList.add('text-gray-600', 'hover:bg-gray-100');
                 }
             });
-
-            const combinedText = [textFilesContent, spreadsheetText].filter(Boolean).join('\n\n---\n\n');
-            const response = await fetch('/.netlify/functions/analyze', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ textData: combinedText, quantitativeData: quantitativePayload, researchQuestion })
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || `API call failed with status: ${response.status}`);
+        }
+        
+        // --- EVENT HANDLING (using delegation) ---
+        document.addEventListener('click', (e) => {
+            const navLink = e.target.closest('[data-nav-link]');
+            if (navLink) { 
+                state.activeTab = navLink.dataset.navLink;
+                // BUG FIX: Reset state when navigating
+                state.reportFileContent = '';
+                state.uploadedImageBase64 = null;
+                render(); 
+                return; 
             }
+            
+            if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
+            if (e.target.closest('#generate-report-btn')) handleGenerateReport();
+            if (e.target.closest('#generate-test-btn')) handleGenerateTest();
+            if (e.target.closest('#generate-homework-help-btn')) handleGenerateHomeworkHelp();
+            if (e.target.closest('#generate-learning-help-btn')) handleGenerateLearningHelp();
+            if (e.target.closest('#remove-file-btn')) handleRemoveFile();
+            if (e.target.closest('#remove-image-btn')) handleRemoveImage();
 
-            const results = await response.json();
-            setAnalysisResults(results);
-            setWorkflowStep('report');
-        } catch (error) {
-            console.error("Analysis failed:", error);
-            setError(error.message);
-            setWorkflowStep('configure');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleBackToUpload = () => { setWorkflowStep('upload'); setAnalysisResults(null); setDataSet([]) };
-    const handleBackToConfig = () => { setWorkflowStep('configure'); setAnalysisResults(null); };
-    const handleDownloadReport = (results) => { /* Download logic */ };
-
-    const renderPage = () => {
-        if (isLoading) {
-            return <div className="w-full p-6 flex flex-col items-center justify-center bg-gray-900/50 backdrop-blur-lg border border-gray-700/50 rounded-lg mt-8 shadow-2xl"><div className="animate-pulse rounded-full h-16 w-16 bg-teal-500/50"></div><p className="mt-4 text-gray-300">Synthesizing insights...</p></div>
-        }
-        switch (workflowStep) {
-            case 'configure':
-                return <ConfigurationPage dataSet={dataSet} setDataSet={setDataSet} onAnalyze={handleAnalysis} onBack={handleBackToUpload} error={error} />;
-            case 'report':
-                return <AnalysisReportPage dataSet={dataSet} results={analysisResults} onBack={handleBackToConfig} onDownload={handleDownloadReport} />;
-            case 'upload':
-            default:
-                return <FileUploadPage dataSet={dataSet} setDataSet={setDataSet} onNext={handleNextStep} onDashboardNavigate={() => onNavigate('dashboard')} />;
-        }
-    };
-    
-    return renderPage();
-};
-
-// --- Main App Component (acts as a router) ---
-
-export default function App() {
-    const [user, setUser] = useState(null);
-    const [page, setPage] = useState('home');
-
-    useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          const currentUser = session?.user ?? null;
-          setUser(currentUser);
-          if (!currentUser && (page === 'app' || page === 'dashboard')) {
-              setPage('home');
-          }
+            const downloadBtn = e.target.closest('[data-action="download"]');
+            if (downloadBtn) handleDownloadDoc(downloadBtn.dataset.filename);
+            
+            const printBtn = e.target.closest('[data-action="print"]');
+            if (printBtn) window.print();
         });
-        return () => subscription.unsubscribe();
-    }, [page]);
 
-    const handleLogin = (loggedInUser) => {
-        setUser(loggedInUser);
-        setPage('dashboard');
-    };
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'language-select') state.language = e.target.value;
+        });
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
-        setUser(null);
-        setPage('home');
-    };
-    
-    const handleNavigate = (destination) => {
-        if (!user && (destination === 'app' || destination === 'dashboard')) {
-            setPage('login');
-        } else {
-            setPage(destination);
-        }
-    };
+        mainContent.addEventListener('change', (e) => {
+            if (e.target.id === 'file-upload') handleFileChange(e);
+            if (e.target.id === 'image-upload') handleImageChange(e);
+            if (e.target.id === 'duration-select') {
+                document.getElementById('custom-duration-wrapper').classList.toggle('hidden', e.target.value !== 'custom');
+            }
+            if (e.target.id === 'num-questions-select') {
+                document.getElementById('custom-questions-wrapper').classList.toggle('hidden', e.target.value !== 'custom');
+            }
+        });
+        
+        // --- API & BUSINESS LOGIC ---
+        
+        async function fetchWithRetry(prompt, isJson, retries = 1, requestType = 'text', imageData = null) {
+            try {
+                const response = await fetch('/.netlify/functions/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ prompt, isJson, requestType, imageData })
+                });
+                if (!response.ok) {
+                    const errorBody = await response.text();
+                    throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
+                }
+                
+                const result = await response.json();
 
-    const renderContent = () => {
-        if (user) {
-            switch (page) {
-                case 'app':
-                    return <AnalysisToolPage onNavigate={handleNavigate} />;
-                case 'dashboard':
-                default:
-                    return <DashboardPage user={user} onNavigate={handleNavigate} />;
+                if (requestType === 'image') {
+                    if (!result.predictions?.[0]?.bytesBase64Encoded) throw new Error("Image generation failed.");
+                    return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
+                }
+                
+                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!text) throw new Error("The AI returned an empty response.");
+                return text;
+            } catch (error) {
+                if (retries > 0) {
+                    console.warn("Request failed, retrying...", error);
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    return fetchWithRetry(prompt, isJson, retries - 1, requestType, imageData);
+                }
+                throw error;
             }
         }
         
-        switch (page) {
-            case 'login':
-                return <LoginPage onLogin={handleLogin} onNavigate={handleNavigate} />;
-            case 'home':
-            default:
-                return <HomePage onNavigate={handleNavigate} />;
-        }
-    };
+        // --- PARENT/LEARNER TOOL HANDLERS ---
+        async function handleGenerateHomeworkHelp() {
+            const errorEl = document.getElementById('hh-error');
+            const outputEl = document.getElementById('hh-output');
+            const button = document.getElementById('generate-homework-help-btn');
 
-    return (
-        <div className="min-h-screen bg-black font-sans text-white relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-gray-900 via-black to-[#3C4142] -z-10"></div>
-            <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-900/40 rounded-full filter blur-3xl opacity-50 animate-aurora-1 -z-10"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-900/40 rounded-full filter blur-3xl opacity-50 animate-aurora-2 -z-10"></div>
-            <Header user={user} onLogout={handleLogout} onNavigate={handleNavigate} />
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                {renderContent()}
-            </main>
-            <Footer />
-        </div>
-    );
-}
+            errorEl.classList.add('hidden');
+            if (!state.uploadedImageBase64) {
+                errorEl.textContent = 'Please upload a photo of your worksheet.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Analyzing...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Analyzing your worksheet...</p></div>`;
+            
+            const prompt = `Analyze the uploaded worksheet image. Provide a JSON object with three keys: "breakdown", "hints", and "answers". "breakdown" should be a simple, bullet-pointed summary of the instructions. "hints" should be an array of gentle hints for each question to guide the student. "answers" should be an array with the final answers to check against.`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true, 1, 'text', state.uploadedImageBase64);
+                const result = JSON.parse(jsonText);
+
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg space-y-6">
+                        ${createSectionHTML('list-checks', 'blue', "Let's Break It Down", result.breakdown)}
+                        ${createSectionHTML('lightbulb', 'yellow', 'Helpful Hints', result.hints)}
+                        ${createSectionHTML('key-round', 'green', 'Check Your Work', result.answers)}
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Get Help`;
+                lucide.createIcons();
+            }
+        }
+
+        async function handleGenerateLearningHelp() {
+            const topic = document.getElementById('learn-topic').value;
+            const errorEl = document.getElementById('lh-error');
+            const outputEl = document.getElementById('lh-output');
+            const button = document.getElementById('generate-learning-help-btn');
+
+            errorEl.classList.add('hidden');
+            if (!topic && !state.uploadedImageBase64) {
+                errorEl.textContent = 'Please enter a topic or upload a photo.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Building your learning guide...</p></div>`;
+
+            const prompt = `Analyze the following topic or image. Provide a JSON object with two keys: "revision_notes" and "practice_test". "revision_notes" should be detailed and comprehensive, broken down into key sections with clear explanations and examples. "practice_test" should be an object with two keys: "questions" and "answers", containing a 5-7 question practice test on the topic. The topic is: ${topic}`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true, 1, 'text', state.uploadedImageBase64);
+                const result = JSON.parse(jsonText);
+                const test = result.practice_test || { questions: [], answers: [] };
+
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg space-y-6">
+                        ${createSectionHTML('book-open', 'indigo', "Revision Notes", result.revision_notes)}
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="file-check-2" class="text-blue-500"></i><span class="ml-2">Practice Test</span></h3>
+                             <ol class="list-decimal list-inside space-y-4 prose prose-sm max-w-none text-gray-700">${test.questions.map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}</ol>
+                        </div>
+                         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
+                             <ol class="list-decimal list-inside space-y-2 prose prose-sm max-w-none text-gray-700">${test.answers.map(a => `<li>${a}</li>`).join('')}</ol>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Help Me Learn`;
+                lucide.createIcons();
+            }
+        }
+        
+        // --- FILE & IMAGE HANDLERS ---
+        function handleFileChange(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const fileInfoEl = document.getElementById('file-info');
+            const fileNameEl = document.getElementById('file-name');
+            fileNameEl.textContent = file.name;
+            fileInfoEl.classList.remove('hidden');
+            fileInfoEl.classList.add('flex');
+            
+            const reader = new FileReader();
+            reader.onload = (event) => { state.reportFileContent = event.target.result; };
+            reader.readAsText(file);
+        }
+
+        function handleRemoveFile() {
+            state.reportFileContent = '';
+            const fileInfoEl = document.getElementById('file-info');
+            const fileInput = document.getElementById('file-upload');
+            fileInfoEl.classList.add('hidden');
+            fileInfoEl.classList.remove('flex');
+            fileInput.value = null; 
+        }
+
+        function handleImageChange(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const previewWrapper = document.getElementById('image-preview-wrapper');
+            const previewImg = document.getElementById('image-preview');
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                state.uploadedImageBase64 = event.target.result.split(',')[1];
+                previewImg.src = event.target.result;
+                previewWrapper.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleRemoveImage() {
+            state.uploadedImageBase64 = null;
+            document.getElementById('image-preview-wrapper').classList.add('hidden');
+            document.getElementById('image-upload').value = null;
+        }
+
+        // --- EXISTING TOOL HANDLERS ---
+        async function handleGenerateLessonPlan() {
+            const topic = document.getElementById('topic').value;
+            const objectives = document.getElementById('objectives').value;
+            const durationSelect = document.getElementById('duration-select');
+            let duration = durationSelect.value;
+            if (duration === 'custom') {
+                duration = document.getElementById('duration-custom').value;
+            }
+            const language = state.language;
+            const errorEl = document.getElementById('lp-error');
+            const outputEl = document.getElementById('lp-output');
+            const button = document.getElementById('generate-plan-btn');
+
+            errorEl.classList.add('hidden');
+            if (!topic || !objectives) {
+                errorEl.textContent = 'Please fill in the Topic and Learning Objectives.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Crafting your lesson plan...</p></div>`;
+
+            const prompt = `Create a detailed lesson plan for a ${duration}-minute lesson. Topic: ${topic}. Learning Objectives: ${objectives}. Language: ${language} English. Format the response using these exact markdown headings: ## Introduction, ## Main Activities, ## Plenary, ## Resources, ## Visual Aid Ideas`;
+
+            try {
+                const text = await fetchWithRetry(prompt, false);
+                const plan = parseLessonPlan(text);
+                const webResources = getWebResources(topic);
+                
+                const getHighlight = (text, length = 70) => {
+                    if (!text) return 'No details provided.';
+                    const sentence = text.split('.')[0];
+                    return sentence.length > length ? sentence.substring(0, length) + '...' : sentence;
+                };
+
+                const timelineHTML = `
+                    <div class="flex items-start text-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 space-x-4">
+                        <div class="flex-1">
+                            <i data-lucide="flag" class="mx-auto h-6 w-6 text-green-500"></i>
+                            <p class="text-xs mt-1 font-bold">Introduction</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.introduction)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="list-checks" class="mx-auto h-6 w-6 text-blue-500"></i>
+                            <p class="text-xs mt-1 font-bold">Main Activities</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.mainActivities)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="award" class="mx-auto h-6 w-6 text-purple-500"></i>
+                            <p class="text-xs mt-1 font-bold">Plenary</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.plenary)}</p>
+                        </div>
+                    </div>
+                `;
+
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Lesson Plan: ${topic}</h1>
+                    ${createSectionHTML('target', 'green', 'Introduction', plan.introduction)}
+                    ${createSectionHTML('list-checks', 'blue', 'Main Activities', plan.mainActivities)}
+                    ${createSectionHTML('flag', 'purple', 'Plenary / Conclusion', plan.plenary)}
+                    ${createSectionHTML('paperclip', 'orange', 'Resources', plan.resources)}
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Your Lesson Plan</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="${`Lesson Plan - ${topic}`.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        ${timelineHTML}
+                        <div id="printable-plan" class="space-y-6">${printableContent}</div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6 print:hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
+                            <ul class="space-y-4">${webResources.map(r => `
+                                <li class="border-b border-gray-200 pb-3 last:border-b-0">
+                                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-purple-600 hover:underline">${r.title}</a>
+                                    <p class="text-sm text-gray-500 mt-1">${r.snippet}</p>
+                                </li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>`;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan`;
+                lucide.createIcons();
+            }
+        }
+
+        async function handleGenerateReport() {
+            const studentName = document.getElementById('studentName').value;
+            const comments = document.getElementById('comments').value;
+            const fileContent = state.reportFileContent || '';
+            const errorEl = document.getElementById('rw-error');
+            const outputEl = document.getElementById('rw-output');
+            const button = document.getElementById('generate-report-btn');
+
+            errorEl.classList.add('hidden');
+            if (!fileContent) { errorEl.textContent = 'Please upload a marks document.'; errorEl.classList.remove('hidden'); return; }
+            if (!studentName) { errorEl.textContent = "Please enter the student's name."; errorEl.classList.remove('hidden'); return; }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Generating your report...</p></div>`;
+
+            const prompt = `Based on the student data and teacher comments for ${studentName}, generate a JSON object with two keys: "marks_analysis" and "narrative_report". 1. "marks_analysis": Briefly summarize the key takeaways from the marks data in a few bullet points. 2. "narrative_report": Write a comprehensive and detailed school report that integrates the teacher's comments, analyzes the marks data, and concludes with areas for improvement. Maintain an encouraging tone. Do not use markdown. Student Marks Data: --- ${fileContent} --- Additional Teacher Comments: --- ${comments} ---`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true);
+                const parsedResult = JSON.parse(jsonText);
+
+                let narrativeReport = "No narrative report could be generated.";
+                let marksAnalysis = "No marks analysis could be generated.";
+                for (const key in parsedResult) {
+                    const lowerKey = key.toLowerCase();
+                    if (lowerKey.includes('narrative')) narrativeReport = parsedResult[key];
+                    if (lowerKey.includes('marks')) marksAnalysis = parsedResult[key];
+                }
+                
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">School Report for ${studentName}</h1>
+                    ${createSectionHTML('message-square', 'purple', 'Narrative Report', narrativeReport)}
+                    ${createSectionHTML('bar-chart-2', 'teal', 'Marks Analysis', marksAnalysis)}
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Generated Report</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="Report for ${studentName.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        <div id="printable-report" class="space-y-6">${printableContent}</div>
+                    </div>`;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report`;
+                lucide.createIcons();
+            }
+        }
+
+        async function handleGenerateTest() {
+            const topic = document.getElementById('test-topic').value;
+            const numQuestionsSelect = document.getElementById('num-questions-select');
+            let numQuestions = numQuestionsSelect.value;
+            if (numQuestions === 'custom') {
+                numQuestions = document.getElementById('num-questions-custom').value;
+            }
+            const errorEl = document.getElementById('tc-error');
+            const outputEl = document.getElementById('tc-output');
+            const button = document.getElementById('generate-test-btn');
+
+            const questionTypes = [];
+            if (document.getElementById('qt-mcq').checked) questionTypes.push('multiple-choice');
+            if (document.getElementById('qt-tf').checked) questionTypes.push('true/false');
+            if (document.getElementById('qt-short').checked) questionTypes.push('short answer');
+
+            errorEl.classList.add('hidden');
+            if (!topic || questionTypes.length === 0) {
+                errorEl.textContent = 'Please provide a topic and select at least one question type.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Creating your revision test...</p></div>`;
+
+            const prompt = `Create a revision test for a student. Do not number the questions. Topic: ${topic}. Number of questions: ${numQuestions}. Question types: ${questionTypes.join(', ')}. The output must be a JSON object with two keys: "questions" and "answers". "questions" should be an array of strings, where each string is a full question (including options for multiple-choice). "answers" should be an array of strings providing the correct answer for each corresponding question.`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true);
+                const parsedResult = JSON.parse(jsonText);
+
+                const questions = (parsedResult.questions || []).map(q => q.replace(/^\d+\.\s*/, ''));
+                const answers = parsedResult.answers || [];
+
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Revision Test: ${topic}</h1>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="file-check-2" class="text-blue-500"></i><span class="ml-2">Questions</span></h3>
+                        <ol class="list-decimal list-inside space-y-4 prose prose-sm max-w-none text-gray-700">${questions.map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}</ol>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
+                        <ol class="list-decimal list-inside space-y-2 prose prose-sm max-w-none text-gray-700">${answers.map(a => `<li>${a}</li>`).join('')}</ol>
+                    </div>
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Generated Test</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="Revision Test - ${topic.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        <div id="printable-test" class="space-y-6">${printableContent}</div>
+                    </div>`;
+                lucide.createIcons();
+
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test`;
+                lucide.createIcons();
+            }
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function parseLessonPlan(text) {
+            const getSection = (heading) => {
+                const regex = new RegExp(`##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+                const match = text.match(regex);
+                return match ? match[1].replace(/\*\*|##|\*/g, '').trim() : '';
+            };
+            return {
+                introduction: getSection('Introduction'),
+                mainActivities: getSection('Main Activities'),
+                plenary: getSection('Plenary') || getSection('Plenary / Conclusion'),
+                resources: getSection('Resources'),
+            };
+        }
+        
+        function getWebResources(topic) {
+            return [
+                { title: `Search YouTube for "${topic}" videos`, snippet: `Find educational videos, songs, and animations.`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent('educational ' + topic + ' for kids')}` },
+                { title: `Find activities for "${topic}" on Google`, snippet: `Search for printable worksheets and games.`, url: `https://www.google.com/search?q=${encodeURIComponent(topic + ' classroom activities and worksheets')}` },
+            ];
+        }
+
+        function createSectionHTML(icon, color, title, content) {
+            let textContent = 'No content provided.';
+            if (typeof content === 'string') {
+                textContent = content.replace(/\n/g, '<br>');
+            } else if (Array.isArray(content)) {
+                textContent = `<ol class="list-decimal list-inside">${content.map(item => `<li>${item}</li>`).join('')}</ol>`;
+            } else if (typeof content === 'object' && content !== null) {
+                textContent = `<ol class="list-decimal list-inside">${Object.values(content).map(item => `<li>${item}</li>`).join('')}</ol>`;
+            } else if (content) {
+                textContent = String(content).replace(/\n/g, '<br>');
+            }
+            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid"><h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="${icon}" class="text-${color}-500"></i><span class="ml-2">${title}</span></h3><div class="prose prose-sm max-w-none text-gray-600">${textContent}</div></div>`;
+        }
+
+        async function handleDownloadDoc(filename) {
+            let printableAreaId;
+            if (state.activeTab === 'lessonPlanner') printableAreaId = 'printable-plan';
+            else if (state.activeTab === 'reportWriter') printableAreaId = 'printable-report';
+            else if (state.activeTab === 'testCreator') printableAreaId = 'printable-test';
+            
+            if (!printableAreaId) return;
+
+            const content = document.getElementById(printableAreaId).innerHTML;
+            const blob = await htmlToDocx.asBlob(content, {
+                margins: { top: 720, right: 720, bottom: 720, left: 720 }
+            });
+            saveAs(blob, `${filename}.docx`);
+        }
+
+        // --- INITIAL RENDER ---
+        render();
+    </script>
+</body>
+</html>
