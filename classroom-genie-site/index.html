@@ -19,8 +19,7 @@
     <style>
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
-            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d1e5e8' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            background: linear-gradient(to bottom, #fbe9f2, #f8fafc);
         }
         .prose { max-width: 65ch; }
         .prose-sm { font-size: 0.875rem; line-height: 1.5; }
@@ -43,14 +42,14 @@
             <aside id="sidebar" class="w-full md:w-64 bg-white p-4 md:h-screen md:sticky top-0 border-r border-gray-200 print:hidden flex flex-col">
                 <div>
                     <div class="flex items-center mb-8">
-                        <i data-lucide="brain-circuit" class="h-8 w-8 text-teal-500"></i>
+                        <i data-lucide="brain-circuit" class="h-8 w-8 text-purple-500"></i>
                         <h1 class="ml-2 text-xl font-bold text-gray-800">Classroom Genie</h1>
                     </div>
                     <nav id="sidebar-nav" class="space-y-2"></nav>
                 </div>
                 <div id="language-selector-wrapper" class="mt-auto pt-4 hidden">
                      <label for="language-select" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                     <select id="language-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                     <select id="language-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
                          <option value="US" selected>US English</option>
                          <option value="UK">UK English</option>
                      </select>
@@ -77,8 +76,8 @@
         // --- TEMPLATES / VIEWS ---
         const homePageTemplate = `
             <div class="max-w-4xl mx-auto text-center">
-                 <div class="bg-white p-8 md:p-12 rounded-xl shadow-xl border-t-4 border-teal-500">
-                    <i data-lucide="sparkles" class="mx-auto h-16 w-16 text-teal-400"></i>
+                 <div class="bg-white p-8 md:p-12 rounded-xl shadow-xl border-t-4 border-purple-500">
+                    <i data-lucide="sparkles" class="mx-auto h-16 w-16 text-purple-400"></i>
                     <h1 class="mt-4 text-4xl md:text-5xl font-bold text-gray-800">Welcome to Classroom Genie</h1>
                     <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Your AI-powered assistant for teaching and learning. Choose your path to get started.</p>
                 </div>
@@ -98,7 +97,7 @@
         
         const teacherHubTemplate = `
             <div class="max-w-4xl mx-auto">
-                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 text-left">
+                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 text-left">
                     <h1 class="text-3xl font-bold text-gray-800">Teacher Tools</h1>
                     <p class="mt-2 text-gray-600">AI-powered tools to streamline your planning and administrative tasks.</p>
                 </div>
@@ -123,7 +122,7 @@
 
         const parentHubTemplate = `
              <div class="max-w-4xl mx-auto">
-                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 text-left">
+                 <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 text-left">
                     <h1 class="text-3xl font-bold text-gray-800">Parent & Learner Tools</h1>
                     <p class="mt-2 text-gray-600">Get AI-powered help with homework and revision.</p>
                 </div>
@@ -143,7 +142,7 @@
         
         const homeworkHelperTemplate = `
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Homework Helper</h2>
                     <p class="text-gray-500 mb-8">Upload a photo of your worksheet to get started.</p>
                     <div>
@@ -152,7 +151,7 @@
                             <div class="space-y-1 text-center">
                                 <i data-lucide="camera" class="mx-auto h-12 w-12 text-gray-400"></i>
                                 <div class="flex text-sm text-gray-600">
-                                    <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
+                                    <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
                                 </div>
                                 <p class="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
@@ -162,7 +161,7 @@
                             <button id="remove-image-btn" class="mt-2 mx-auto flex items-center text-sm text-red-600 hover:text-red-800"><i data-lucide="x" class="h-4 w-4 mr-1"></i>Remove image</button>
                         </div>
                     </div>
-                    <button id="generate-homework-help-btn" class="mt-6 w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 flex items-center justify-center disabled:bg-teal-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Get Help</button>
+                    <button id="generate-homework-help-btn" class="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 flex items-center justify-center disabled:bg-purple-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Get Help</button>
                     <div id="hh-error" class="text-red-500 text-sm mt-2 hidden"></div>
                 </div>
                 <div id="hh-output" class="mt-8"></div>
@@ -170,13 +169,13 @@
 
         const learningHubTemplate = `
              <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Learning Hub</h2>
                     <p class="text-gray-500 mb-8">Describe a topic or upload a photo to get revision notes and a practice test.</p>
                      <div class="space-y-6">
                         <div>
                             <label for="learn-topic" class="block text-sm font-medium text-gray-700 mb-1">What do you want to learn about?</label>
-                            <textarea id="learn-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The planets in our solar system"></textarea>
+                            <textarea id="learn-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The planets in our solar system"></textarea>
                         </div>
                         <div class="text-center text-sm text-gray-500">OR</div>
                         <div>
@@ -185,7 +184,7 @@
                                 <div class="space-y-1 text-center">
                                     <i data-lucide="camera" class="mx-auto h-12 w-12 text-gray-400"></i>
                                     <div class="flex text-sm text-gray-600">
-                                        <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
+                                        <label for="image-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500"><span>Upload a file</span><input id="image-upload" type="file" class="sr-only" accept="image/*"></label>
                                     </div>
                                 </div>
                             </div>
@@ -195,7 +194,7 @@
                             </div>
                         </div>
                     </div>
-                    <button id="generate-learning-help-btn" class="mt-6 w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 flex items-center justify-center disabled:bg-teal-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Help Me Learn</button>
+                    <button id="generate-learning-help-btn" class="mt-6 w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 flex items-center justify-center disabled:bg-purple-300"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Help Me Learn</button>
                     <div id="lh-error" class="text-red-500 text-sm mt-2 hidden"></div>
                 </div>
                 <div id="lh-output" class="mt-8"></div>
@@ -203,14 +202,14 @@
         
         const lessonPlannerTemplate = `
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Lesson Plan Creator</h2>
                     <p class="text-gray-500 mb-8">Design engaging lesson plans with AI-suggested web resources.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div class="md:col-span-2"><label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label><input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Water Cycle"></div>
+                        <div class="md:col-span-2"><label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label><input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The Water Cycle"></div>
                         <div>
                             <label for="duration-select" class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
-                            <select id="duration-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                            <select id="duration-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
                                 <option value="20">20 minutes</option>
                                 <option value="30">30 minutes</option>
                                 <option value="45" selected>45 minutes</option>
@@ -220,11 +219,11 @@
                         </div>
                         <div id="custom-duration-wrapper" class="hidden">
                             <label for="duration-custom" class="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
-                            <input type="number" id="duration-custom" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                            <input type="number" id="duration-custom" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
                         </div>
-                        <div class="md:col-span-2"><label for="objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label><textarea id="objectives" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Students will be able to name the stages of the water cycle."></textarea></div>
+                        <div class="md:col-span-2"><label for="objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label><textarea id="objectives" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., Students will be able to name the stages of the water cycle."></textarea></div>
                     </div>
-                    <button id="generate-plan-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan</button>
+                    <button id="generate-plan-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan</button>
                     <div id="lp-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
                 </div>
                 <div id="lp-output" class="mt-8">
@@ -238,13 +237,13 @@
 
         const reportWriterTemplate = `
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Report Writer</h2>
                     <p class="text-gray-500 mb-8">Generate student reports from marks and your insights.</p>
                     <div class="space-y-6 mb-8">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Upload Marks</label>
-                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i><div class="flex text-sm text-gray-600"><label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"><span>Upload a file</span><input id="file-upload" type="file" class="sr-only" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PDF, Excel, CSV, Word up to 10MB</p></div></div>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i><div class="flex text-sm text-gray-600"><label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-purple-500"><span>Upload a file</span><input id="file-upload" type="file" class="sr-only" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PDF, Excel, CSV, Word up to 10MB</p></div></div>
                             <div id="file-info" class="hidden items-center justify-between bg-gray-100 p-2 rounded-lg mt-2">
                                 <span id="file-name" class="text-sm text-gray-700 truncate"></span>
                                 <button id="remove-file-btn" class="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors">
@@ -252,10 +251,10 @@
                                 </button>
                             </div>
                         </div>
-                        <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Student's Name</label><input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Jane Doe"></div>
-                        <div><label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments for Narrative Report</label><p class="text-sm text-gray-500 mb-2">Highly recommended. Adding your own insights helps the AI write a much richer, more personalized report.</p><textarea id="comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 'Shows great enthusiasm...'"></textarea></div>
+                        <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Student's Name</label><input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., Jane Doe"></div>
+                        <div><label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments for Narrative Report</label><p class="text-sm text-gray-500 mb-2">Highly recommended. Adding your own insights helps the AI write a much richer, more personalized report.</p><textarea id="comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., 'Shows great enthusiasm...'"></textarea></div>
                     </div>
-                    <button id="generate-report-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report</button>
+                    <button id="generate-report-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report</button>
                     <div id="rw-error" class="text-red-500 text-sm mt-2 hidden"></div>
                 </div>
                 <div id="rw-output" class="mt-8">
@@ -269,18 +268,18 @@
         
         const testCreatorTemplate = `
             <div class="max-w-4xl mx-auto">
-                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-purple-500 print:hidden">
                     <h2 class="text-3xl font-bold text-gray-800 mb-2">Revision Test Creator</h2>
                     <p class="text-gray-500 mb-8">Generate a revision test with various question types for any topic.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                         <div class="md:col-span-2">
                             <label for="test-topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
-                            <textarea id="test-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Roman Empire, including the rise and fall, key emperors, and major architectural achievements."></textarea>
+                            <textarea id="test-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500" placeholder="e.g., The Roman Empire, including the rise and fall, key emperors, and major architectural achievements."></textarea>
                         </div>
                         <div class="flex items-end space-x-4">
                             <div>
                                 <label for="num-questions-select" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
-                                <select id="num-questions-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                <select id="num-questions-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500 bg-white">
                                     <option value="10" selected>10</option>
                                     <option value="15">15</option>
                                     <option value="20">20</option>
@@ -289,19 +288,19 @@
                             </div>
                             <div id="custom-questions-wrapper" class="hidden flex-1">
                                 <label for="num-questions-custom" class="block text-sm font-medium text-gray-700 mb-1">Custom</label>
-                                <input type="number" id="num-questions-custom" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                                <input type="number" id="num-questions-custom" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-purple-500 focus:border-purple-500">
                             </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Question Types</label>
                             <div class="space-y-2 mt-2">
-                                <label class="flex items-center"><input type="checkbox" id="qt-mcq" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500" checked> <span class="ml-2 text-sm text-gray-700">Multiple Choice</span></label>
-                                <label class="flex items-center"><input type="checkbox" id="qt-tf" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"> <span class="ml-2 text-sm text-gray-700">True/False</span></label>
-                                <label class="flex items-center"><input type="checkbox" id="qt-short" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"> <span class="ml-2 text-sm text-gray-700">Short Answer</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-mcq" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500" checked> <span class="ml-2 text-sm text-gray-700">Multiple Choice</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-tf" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"> <span class="ml-2 text-sm text-gray-700">True/False</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-short" class="h-4 w-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"> <span class="ml-2 text-sm text-gray-700">Short Answer</span></label>
                             </div>
                         </div>
                     </div>
-                    <button id="generate-test-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test</button>
+                    <button id="generate-test-btn" class="w-full bg-purple-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-purple-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-purple-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test</button>
                     <div id="tc-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
                 </div>
                 <div id="tc-output" class="mt-8">
@@ -366,10 +365,10 @@
                                  (linkTab === 'parentHub' && isParentTool);
 
                 if (isActive) {
-                    link.classList.add('bg-teal-600', 'text-white', 'shadow-md');
+                    link.classList.add('bg-purple-600', 'text-white', 'shadow-md');
                     link.classList.remove('text-gray-600', 'hover:bg-gray-100');
                 } else {
-                    link.classList.remove('bg-teal-600', 'text-white', 'shadow-md');
+                    link.classList.remove('bg-purple-600', 'text-white', 'shadow-md');
                     link.classList.add('text-gray-600', 'hover:bg-gray-100');
                 }
             });
@@ -669,7 +668,7 @@
                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
                             <ul class="space-y-4">${webResources.map(r => `
                                 <li class="border-b border-gray-200 pb-3 last:border-b-0">
-                                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-teal-600 hover:underline">${r.title}</a>
+                                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-purple-600 hover:underline">${r.title}</a>
                                     <p class="text-sm text-gray-500 mt-1">${r.snippet}</p>
                                 </li>`).join('')}
                             </ul>
