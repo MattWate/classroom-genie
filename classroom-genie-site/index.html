@@ -28,8 +28,9 @@
             body * { visibility: hidden; }
             #printable-plan, #printable-plan *,
             #printable-report, #printable-report *,
-            #printable-test, #printable-test * { visibility: visible; }
-            #printable-plan, #printable-report, #printable-test {
+            #printable-test, #printable-test *,
+            #printable-worksheet, #printable-worksheet * { visibility: visible; }
+            #printable-plan, #printable-report, #printable-test, #printable-worksheet {
                 position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; border: none;
             }
             .print-only-title { display: block !important; text-align: center; margin-bottom: 2rem; }
@@ -412,12 +413,12 @@
         
         // --- API & BUSINESS LOGIC ---
         
-        async function fetchWithRetry(prompt, isJson, retries = 1, requestType = 'text') {
+        async function fetchWithRetry(prompt, isJson, retries = 1, requestType = 'text', imageData = null) {
             try {
                 const response = await fetch('/.netlify/functions/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ prompt, isJson, requestType })
+                    body: JSON.stringify({ prompt, isJson, requestType, imageData })
                 });
                 if (!response.ok) {
                     const errorBody = await response.text();
@@ -438,15 +439,102 @@
                 if (retries > 0) {
                     console.warn("Request failed, retrying...", error);
                     await new Promise(resolve => setTimeout(resolve, 500));
-                    return fetchWithRetry(prompt, isJson, retries - 1, requestType);
+                    return fetchWithRetry(prompt, isJson, retries - 1, requestType, imageData);
                 }
                 throw error;
             }
         }
         
-        // --- PARENT/LEARNER TOOL HANDLERS (STUBS) ---
-        async function handleGenerateHomeworkHelp() { alert("Homework Helper functionality coming soon!"); }
-        async function handleGenerateLearningHelp() { alert("Learning Hub functionality coming soon!"); }
+        // --- PARENT/LEARNER TOOL HANDLERS ---
+        async function handleGenerateHomeworkHelp() {
+            const errorEl = document.getElementById('hh-error');
+            const outputEl = document.getElementById('hh-output');
+            const button = document.getElementById('generate-homework-help-btn');
+
+            errorEl.classList.add('hidden');
+            if (!state.uploadedImageBase64) {
+                errorEl.textContent = 'Please upload a photo of your worksheet.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Analyzing...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Analyzing your worksheet...</p></div>`;
+            
+            const prompt = `Analyze the uploaded worksheet image. Provide a JSON object with three keys: "breakdown", "hints", and "answers". "breakdown" should be a simple, bullet-pointed summary of the instructions. "hints" should be an array of gentle hints for each question to guide the student. "answers" should be an array with the final answers to check against.`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true, 1, 'text', state.uploadedImageBase64);
+                const result = JSON.parse(jsonText);
+
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg space-y-6">
+                        ${createSectionHTML('list-checks', 'blue', "Let's Break It Down", result.breakdown)}
+                        ${createSectionHTML('lightbulb', 'yellow', 'Helpful Hints', result.hints)}
+                        ${createSectionHTML('key-round', 'green', 'Check Your Work', result.answers)}
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Get Help`;
+                lucide.createIcons();
+            }
+        }
+
+        async function handleGenerateLearningHelp() {
+            const topic = document.getElementById('learn-topic').value;
+            const errorEl = document.getElementById('lh-error');
+            const outputEl = document.getElementById('lh-output');
+            const button = document.getElementById('generate-learning-help-btn');
+
+            errorEl.classList.add('hidden');
+            if (!topic && !state.uploadedImageBase64) {
+                errorEl.textContent = 'Please enter a topic or upload a photo.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Building your learning guide...</p></div>`;
+
+            const prompt = `Analyze the following topic or image. Provide a JSON object with two keys: "revision_notes" and "practice_test". "revision_notes" should be a clear, concise summary of the key concepts. "practice_test" should be an object with two keys: "questions" and "answers", containing a short 3-5 question practice test on the topic. The topic is: ${topic}`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true, 1, 'text', state.uploadedImageBase64);
+                const result = JSON.parse(jsonText);
+                const test = result.practice_test || { questions: [], answers: [] };
+
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg space-y-6">
+                        ${createSectionHTML('book-open', 'indigo', "Revision Notes", result.revision_notes)}
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="file-check-2" class="text-blue-500"></i><span class="ml-2">Practice Test</span></h3>
+                             <ol class="list-decimal list-inside space-y-4 prose prose-sm max-w-none text-gray-700">${test.questions.map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}</ol>
+                        </div>
+                         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                             <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
+                             <ol class="list-decimal list-inside space-y-2 prose prose-sm max-w-none text-gray-700">${test.answers.map(a => `<li>${a}</li>`).join('')}</ol>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Help Me Learn`;
+                lucide.createIcons();
+            }
+        }
         
         // --- FILE & IMAGE HANDLERS ---
         function handleFileChange(e) {
