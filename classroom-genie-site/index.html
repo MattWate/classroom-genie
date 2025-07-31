@@ -28,9 +28,8 @@
             body * { visibility: hidden; }
             #printable-plan, #printable-plan *,
             #printable-report, #printable-report *,
-            #printable-test, #printable-test *,
-            #printable-worksheet, #printable-worksheet * { visibility: visible; }
-            #printable-plan, #printable-report, #printable-test, #printable-worksheet {
+            #printable-test, #printable-test * { visibility: visible; }
+            #printable-plan, #printable-report, #printable-test {
                 position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; border: none;
             }
             .print-only-title { display: block !important; text-align: center; margin-bottom: 2rem; }
@@ -379,7 +378,14 @@
         // --- EVENT HANDLING (using delegation) ---
         document.addEventListener('click', (e) => {
             const navLink = e.target.closest('[data-nav-link]');
-            if (navLink) { state.activeTab = navLink.dataset.navLink; render(); return; }
+            if (navLink) { 
+                state.activeTab = navLink.dataset.navLink;
+                // BUG FIX: Reset state when navigating
+                state.reportFileContent = '';
+                state.uploadedImageBase64 = null;
+                render(); 
+                return; 
+            }
             
             if (e.target.closest('#generate-plan-btn')) handleGenerateLessonPlan();
             if (e.target.closest('#generate-report-btn')) handleGenerateReport();
@@ -504,7 +510,7 @@
             button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
             outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Building your learning guide...</p></div>`;
 
-            const prompt = `Analyze the following topic or image. Provide a JSON object with two keys: "revision_notes" and "practice_test". "revision_notes" should be a clear, concise summary of the key concepts. "practice_test" should be an object with two keys: "questions" and "answers", containing a short 3-5 question practice test on the topic. The topic is: ${topic}`;
+            const prompt = `Analyze the following topic or image. Provide a JSON object with two keys: "revision_notes" and "practice_test". "revision_notes" should be detailed and comprehensive, broken down into key sections with clear explanations and examples. "practice_test" should be an object with two keys: "questions" and "answers", containing a 5-7 question practice test on the topic. The topic is: ${topic}`;
 
             try {
                 const jsonText = await fetchWithRetry(prompt, true, 1, 'text', state.uploadedImageBase64);
