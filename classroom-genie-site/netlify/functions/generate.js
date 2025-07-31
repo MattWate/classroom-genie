@@ -1,5 +1,5 @@
 // The code for our secure backend function
-// This version includes enhanced error logging to pinpoint API issues.
+// This function can now handle both text and image generation requests.
 
 exports.handler = async function (event) {
   // Only allow POST requests
