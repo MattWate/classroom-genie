@@ -28,9 +28,8 @@
             body * { visibility: hidden; }
             #printable-plan, #printable-plan *,
             #printable-report, #printable-report *,
-            #printable-test, #printable-test *,
-            #printable-worksheet, #printable-worksheet * { visibility: visible; }
-            #printable-plan, #printable-report, #printable-test, #printable-worksheet {
+            #printable-test, #printable-test * { visibility: visible; }
+            #printable-plan, #printable-report, #printable-test {
                 position: absolute; left: 0; top: 0; width: 100%; padding: 1rem; border: none;
             }
             .print-only-title { display: block !important; text-align: center; margin-bottom: 2rem; }
@@ -47,9 +46,7 @@
                         <i data-lucide="brain-circuit" class="h-8 w-8 text-teal-500"></i>
                         <h1 class="ml-2 text-xl font-bold text-gray-800">Classroom Genie</h1>
                     </div>
-                    <nav id="sidebar-nav" class="space-y-2">
-                        {/* Nav links will be dynamically inserted here */}
-                    </nav>
+                    <nav id="sidebar-nav" class="space-y-2"></nav>
                 </div>
                 <div id="language-selector-wrapper" class="mt-auto pt-4 hidden">
                      <label for="language-select" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
@@ -89,7 +86,7 @@
                     <div data-nav-link="teacherHub" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-purple-400">
                         <i data-lucide="briefcase" class="h-12 w-12 text-purple-500 mb-4 mx-auto"></i>
                         <h2 class="text-2xl font-bold text-gray-800">For Teachers</h2>
-                        <p class="mt-2 text-gray-600">Create lesson plans, reports, tests, and worksheets in minutes.</p>
+                        <p class="mt-2 text-gray-600">Create lesson plans, reports, and tests in minutes.</p>
                     </div>
                     <div data-nav-link="parentHub" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-green-400">
                         <i data-lucide="users" class="h-12 w-12 text-green-500 mb-4 mx-auto"></i>
@@ -116,7 +113,7 @@
                         <h2 class="text-2xl font-bold text-gray-800">Report Writer</h2>
                         <p class="mt-2 text-gray-600">Create comprehensive school reports from student marks.</p>
                     </div>
-                    <div data-nav-link="testCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400">
+                    <div data-nav-link="testCreator" class="group bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 cursor-pointer border-t-4 border-blue-400 md:col-span-2">
                         <i data-lucide="file-check" class="h-12 w-12 text-blue-500 mb-4"></i>
                         <h2 class="text-2xl font-bold text-gray-800">Revision Test Creator</h2>
                         <p class="mt-2 text-gray-600">Design revision tests with multiple question types.</p>
@@ -202,6 +199,118 @@
                     <div id="lh-error" class="text-red-500 text-sm mt-2 hidden"></div>
                 </div>
                 <div id="lh-output" class="mt-8"></div>
+            </div>`;
+        
+        const lessonPlannerTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Lesson Plan Creator</h2>
+                    <p class="text-gray-500 mb-8">Design engaging lesson plans with AI-suggested web resources.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="md:col-span-2"><label for="topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label><input type="text" id="topic" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Water Cycle"></div>
+                        <div>
+                            <label for="duration-select" class="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                            <select id="duration-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                <option value="20">20 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="45" selected>45 minutes</option>
+                                <option value="60">1 hour</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                        <div id="custom-duration-wrapper" class="hidden">
+                            <label for="duration-custom" class="block text-sm font-medium text-gray-700 mb-1">Minutes</label>
+                            <input type="number" id="duration-custom" value="45" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                        </div>
+                        <div class="md:col-span-2"><label for="objectives" class="block text-sm font-medium text-gray-700 mb-1">Learning Objectives</label><textarea id="objectives" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Students will be able to name the stages of the water cycle."></textarea></div>
+                    </div>
+                    <button id="generate-plan-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan</button>
+                    <div id="lp-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
+                </div>
+                <div id="lp-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your masterpiece awaits!</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to create your lesson plan.</p>
+                    </div>
+                </div>
+            </div>`;
+
+        const reportWriterTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Report Writer</h2>
+                    <p class="text-gray-500 mb-8">Generate student reports from marks and your insights.</p>
+                    <div class="space-y-6 mb-8">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Upload Marks</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md"><div class="space-y-1 text-center"><i data-lucide="upload-cloud" class="mx-auto h-12 w-12 text-gray-400"></i><div class="flex text-sm text-gray-600"><label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-teal-600 hover:text-teal-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-teal-500"><span>Upload a file</span><input id="file-upload" type="file" class="sr-only" accept=".pdf,.xls,.xlsx,.csv,.doc,.docx,.txt"></label><p class="pl-1">or drag and drop</p></div><p class="text-xs text-gray-500">PDF, Excel, CSV, Word up to 10MB</p></div></div>
+                            <div id="file-info" class="hidden items-center justify-between bg-gray-100 p-2 rounded-lg mt-2">
+                                <span id="file-name" class="text-sm text-gray-700 truncate"></span>
+                                <button id="remove-file-btn" class="p-1 rounded-full hover:bg-red-100 text-gray-500 hover:text-red-600 transition-colors">
+                                    <i data-lucide="x" class="h-4 w-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div><label for="studentName" class="block text-sm font-medium text-gray-700 mb-1">Student's Name</label><input type="text" id="studentName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., Jane Doe"></div>
+                        <div><label for="comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments for Narrative Report</label><p class="text-sm text-gray-500 mb-2">Highly recommended. Adding your own insights helps the AI write a much richer, more personalized report.</p><textarea id="comments" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., 'Shows great enthusiasm...'"></textarea></div>
+                    </div>
+                    <button id="generate-report-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100"><i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report</button>
+                    <div id="rw-error" class="text-red-500 text-sm mt-2 hidden"></div>
+                </div>
+                <div id="rw-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your report will appear here.</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to get started.</p>
+                    </div>
+                </div>
+            </div>`;
+        
+        const testCreatorTemplate = `
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white p-8 rounded-xl shadow-xl border-t-4 border-teal-500 print:hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-2">Revision Test Creator</h2>
+                    <p class="text-gray-500 mb-8">Generate a revision test with various question types for any topic.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div class="md:col-span-2">
+                            <label for="test-topic" class="block text-sm font-medium text-gray-700 mb-1">Topic</label>
+                            <textarea id="test-topic" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500" placeholder="e.g., The Roman Empire, including the rise and fall, key emperors, and major architectural achievements."></textarea>
+                        </div>
+                        <div class="flex items-end space-x-4">
+                            <div>
+                                <label for="num-questions-select" class="block text-sm font-medium text-gray-700 mb-1">Number of Questions</label>
+                                <select id="num-questions-select" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500 bg-white">
+                                    <option value="10" selected>10</option>
+                                    <option value="15">15</option>
+                                    <option value="20">20</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                            <div id="custom-questions-wrapper" class="hidden flex-1">
+                                <label for="num-questions-custom" class="block text-sm font-medium text-gray-700 mb-1">Custom</label>
+                                <input type="number" id="num-questions-custom" value="10" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-teal-500 focus:border-teal-500">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Question Types</label>
+                            <div class="space-y-2 mt-2">
+                                <label class="flex items-center"><input type="checkbox" id="qt-mcq" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500" checked> <span class="ml-2 text-sm text-gray-700">Multiple Choice</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-tf" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"> <span class="ml-2 text-sm text-gray-700">True/False</span></label>
+                                <label class="flex items-center"><input type="checkbox" id="qt-short" class="h-4 w-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"> <span class="ml-2 text-sm text-gray-700">Short Answer</span></label>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="generate-test-btn" class="w-full bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center disabled:bg-teal-300 disabled:scale-100 mb-8"><i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test</button>
+                    <div id="tc-error" class="text-red-500 text-sm mt-2 mb-6 hidden"></div>
+                </div>
+                <div id="tc-output" class="mt-8">
+                    <div class="text-center p-12 bg-white rounded-xl shadow-lg border-t-4 border-gray-200">
+                        <i data-lucide="lightbulb" class="mx-auto h-16 w-16 text-gray-300"></i>
+                        <h3 class="mt-4 text-lg font-semibold text-gray-700">Your test will appear here.</h3>
+                        <p class="mt-1 text-gray-500">Fill out the form above to create a revision test.</p>
+                    </div>
+                </div>
             </div>`;
 
         // --- RENDER & NAVIGATION ---
@@ -314,11 +423,14 @@
                     const errorBody = await response.text();
                     throw new Error(`API request failed with status ${response.status}: ${errorBody}`);
                 }
+                
                 const result = await response.json();
+
                 if (requestType === 'image') {
                     if (!result.predictions?.[0]?.bytesBase64Encoded) throw new Error("Image generation failed.");
                     return `data:image/png;base64,${result.predictions[0].bytesBase64Encoded}`;
                 }
+                
                 const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
                 if (!text) throw new Error("The AI returned an empty response.");
                 return text;
@@ -382,27 +494,285 @@
 
         // --- EXISTING TOOL HANDLERS ---
         async function handleGenerateLessonPlan() {
-            // ... (existing function code)
+            const topic = document.getElementById('topic').value;
+            const objectives = document.getElementById('objectives').value;
+            const durationSelect = document.getElementById('duration-select');
+            let duration = durationSelect.value;
+            if (duration === 'custom') {
+                duration = document.getElementById('duration-custom').value;
+            }
+            const language = state.language;
+            const errorEl = document.getElementById('lp-error');
+            const outputEl = document.getElementById('lp-output');
+            const button = document.getElementById('generate-plan-btn');
+
+            errorEl.classList.add('hidden');
+            if (!topic || !objectives) {
+                errorEl.textContent = 'Please fill in the Topic and Learning Objectives.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Crafting your lesson plan...</p></div>`;
+
+            const prompt = `Create a detailed lesson plan for a ${duration}-minute lesson. Topic: ${topic}. Learning Objectives: ${objectives}. Language: ${language} English. Format the response using these exact markdown headings: ## Introduction, ## Main Activities, ## Plenary, ## Resources, ## Visual Aid Ideas`;
+
+            try {
+                const text = await fetchWithRetry(prompt, false);
+                const plan = parseLessonPlan(text);
+                const webResources = getWebResources(topic);
+                
+                const getHighlight = (text, length = 70) => {
+                    if (!text) return 'No details provided.';
+                    const sentence = text.split('.')[0];
+                    return sentence.length > length ? sentence.substring(0, length) + '...' : sentence;
+                };
+
+                const timelineHTML = `
+                    <div class="flex items-start text-center bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 space-x-4">
+                        <div class="flex-1">
+                            <i data-lucide="flag" class="mx-auto h-6 w-6 text-green-500"></i>
+                            <p class="text-xs mt-1 font-bold">Introduction</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.introduction)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="list-checks" class="mx-auto h-6 w-6 text-blue-500"></i>
+                            <p class="text-xs mt-1 font-bold">Main Activities</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.mainActivities)}</p>
+                        </div>
+                        <div class="w-px bg-gray-300 self-stretch"></div>
+                        <div class="flex-1">
+                            <i data-lucide="award" class="mx-auto h-6 w-6 text-purple-500"></i>
+                            <p class="text-xs mt-1 font-bold">Plenary</p>
+                            <p class="text-xs mt-1 text-gray-500">${getHighlight(plan.plenary)}</p>
+                        </div>
+                    </div>
+                `;
+
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Lesson Plan: ${topic}</h1>
+                    ${createSectionHTML('target', 'green', 'Introduction', plan.introduction)}
+                    ${createSectionHTML('list-checks', 'blue', 'Main Activities', plan.mainActivities)}
+                    ${createSectionHTML('flag', 'purple', 'Plenary / Conclusion', plan.plenary)}
+                    ${createSectionHTML('paperclip', 'orange', 'Resources', plan.resources)}
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Your Lesson Plan</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="${`Lesson Plan - ${topic}`.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        ${timelineHTML}
+                        <div id="printable-plan" class="space-y-6">${printableContent}</div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mt-6 print:hidden">
+                            <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-4"><i data-lucide="video" class="text-pink-500"></i><span class="ml-2">Web Resources & Videos</span></h3>
+                            <ul class="space-y-4">${webResources.map(r => `
+                                <li class="border-b border-gray-200 pb-3 last:border-b-0">
+                                    <a href="${r.url}" target="_blank" rel="noopener noreferrer" class="font-semibold text-teal-600 hover:underline">${r.title}</a>
+                                    <p class="text-sm text-gray-500 mt-1">${r.snippet}</p>
+                                </li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>`;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Lesson Plan`;
+                lucide.createIcons();
+            }
         }
+
         async function handleGenerateReport() {
-            // ... (existing function code)
+            const studentName = document.getElementById('studentName').value;
+            const comments = document.getElementById('comments').value;
+            const fileContent = state.reportFileContent || '';
+            const errorEl = document.getElementById('rw-error');
+            const outputEl = document.getElementById('rw-output');
+            const button = document.getElementById('generate-report-btn');
+
+            errorEl.classList.add('hidden');
+            if (!fileContent) { errorEl.textContent = 'Please upload a marks document.'; errorEl.classList.remove('hidden'); return; }
+            if (!studentName) { errorEl.textContent = "Please enter the student's name."; errorEl.classList.remove('hidden'); return; }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Generating your report...</p></div>`;
+
+            const prompt = `Based on the student data and teacher comments for ${studentName}, generate a JSON object with two keys: "marks_analysis" and "narrative_report". 1. "marks_analysis": Briefly summarize the key takeaways from the marks data in a few bullet points. 2. "narrative_report": Write a comprehensive and detailed school report that integrates the teacher's comments, analyzes the marks data, and concludes with areas for improvement. Maintain an encouraging tone. Do not use markdown. Student Marks Data: --- ${fileContent} --- Additional Teacher Comments: --- ${comments} ---`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true);
+                const parsedResult = JSON.parse(jsonText);
+
+                let narrativeReport = "No narrative report could be generated.";
+                let marksAnalysis = "No marks analysis could be generated.";
+                for (const key in parsedResult) {
+                    const lowerKey = key.toLowerCase();
+                    if (lowerKey.includes('narrative')) narrativeReport = parsedResult[key];
+                    if (lowerKey.includes('marks')) marksAnalysis = parsedResult[key];
+                }
+                
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">School Report for ${studentName}</h1>
+                    ${createSectionHTML('message-square', 'purple', 'Narrative Report', narrativeReport)}
+                    ${createSectionHTML('bar-chart-2', 'teal', 'Marks Analysis', marksAnalysis)}
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Generated Report</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="Report for ${studentName.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        <div id="printable-report" class="space-y-6">${printableContent}</div>
+                    </div>`;
+                lucide.createIcons();
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="file-text" class="w-5 h-5 mr-2"></i>Generate Report`;
+                lucide.createIcons();
+            }
         }
+
         async function handleGenerateTest() {
-            // ... (existing function code)
+            const topic = document.getElementById('test-topic').value;
+            const numQuestionsSelect = document.getElementById('num-questions-select');
+            let numQuestions = numQuestionsSelect.value;
+            if (numQuestions === 'custom') {
+                numQuestions = document.getElementById('num-questions-custom').value;
+            }
+            const errorEl = document.getElementById('tc-error');
+            const outputEl = document.getElementById('tc-output');
+            const button = document.getElementById('generate-test-btn');
+
+            const questionTypes = [];
+            if (document.getElementById('qt-mcq').checked) questionTypes.push('multiple-choice');
+            if (document.getElementById('qt-tf').checked) questionTypes.push('true/false');
+            if (document.getElementById('qt-short').checked) questionTypes.push('short answer');
+
+            errorEl.classList.add('hidden');
+            if (!topic || questionTypes.length === 0) {
+                errorEl.textContent = 'Please provide a topic and select at least one question type.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            button.disabled = true;
+            button.innerHTML = `<div class="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div> Generating...`;
+            outputEl.innerHTML = `<div class="text-center text-gray-600"><p>Creating your revision test...</p></div>`;
+
+            const prompt = `Create a revision test for a student. Do not number the questions. Topic: ${topic}. Number of questions: ${numQuestions}. Question types: ${questionTypes.join(', ')}. The output must be a JSON object with two keys: "questions" and "answers". "questions" should be an array of strings, where each string is a full question (including options for multiple-choice). "answers" should be an array of strings providing the correct answer for each corresponding question.`;
+
+            try {
+                const jsonText = await fetchWithRetry(prompt, true);
+                const parsedResult = JSON.parse(jsonText);
+
+                const questions = (parsedResult.questions || []).map(q => q.replace(/^\d+\.\s*/, ''));
+                const answers = parsedResult.answers || [];
+
+                const printableContent = `
+                    <h1 class="text-3xl font-bold text-center">Revision Test: ${topic}</h1>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="file-check-2" class="text-blue-500"></i><span class="ml-2">Questions</span></h3>
+                        <ol class="list-decimal list-inside space-y-4 prose prose-sm max-w-none text-gray-700">${questions.map(q => `<li>${q.replace(/\n/g, '<br>')}</li>`).join('')}</ol>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid">
+                        <h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="key-round" class="text-green-500"></i><span class="ml-2">Answer Key</span></h3>
+                        <ol class="list-decimal list-inside space-y-2 prose prose-sm max-w-none text-gray-700">${answers.map(a => `<li>${a}</li>`).join('')}</ol>
+                    </div>
+                `;
+                
+                outputEl.innerHTML = `
+                    <div class="bg-gray-50/50 p-6 rounded-lg">
+                        <div class="flex justify-between items-center mb-6 print:hidden">
+                            <h2 class="text-2xl font-bold text-gray-800">Generated Test</h2>
+                            <div class="flex space-x-2">
+                                <button data-action="download" data-filename="Revision Test - ${topic.replace(/"/g, '&quot;')}" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="download" class="w-5 h-5 mr-2"></i>Download</button>
+                                <button data-action="print" class="flex items-center bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"><i data-lucide="printer" class="w-5 h-5 mr-2"></i>Print</button>
+                            </div>
+                        </div>
+                        <div id="printable-test" class="space-y-6">${printableContent}</div>
+                    </div>`;
+                lucide.createIcons();
+
+            } catch (e) {
+                errorEl.textContent = `An error occurred: ${e.message}`;
+                errorEl.classList.remove('hidden');
+                outputEl.innerHTML = '';
+            } finally {
+                button.disabled = false;
+                button.innerHTML = `<i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>Generate Test`;
+                lucide.createIcons();
+            }
         }
-        
+
         // --- UTILITY FUNCTIONS ---
         function parseLessonPlan(text) {
-            // ... (existing function code)
+            const getSection = (heading) => {
+                const regex = new RegExp(`##\\s*${heading}\\s*\\n([\\s\\S]*?)(?=\\n##|$)`, 'i');
+                const match = text.match(regex);
+                return match ? match[1].replace(/\*\*|##|\*/g, '').trim() : '';
+            };
+            return {
+                introduction: getSection('Introduction'),
+                mainActivities: getSection('Main Activities'),
+                plenary: getSection('Plenary') || getSection('Plenary / Conclusion'),
+                resources: getSection('Resources'),
+            };
         }
+        
         function getWebResources(topic) {
-            // ... (existing function code)
+            return [
+                { title: `Search YouTube for "${topic}" videos`, snippet: `Find educational videos, songs, and animations.`, url: `https://www.youtube.com/results?search_query=${encodeURIComponent('educational ' + topic + ' for kids')}` },
+                { title: `Find activities for "${topic}" on Google`, snippet: `Search for printable worksheets and games.`, url: `https://www.google.com/search?q=${encodeURIComponent(topic + ' classroom activities and worksheets')}` },
+            ];
         }
+
         function createSectionHTML(icon, color, title, content) {
-            // ... (existing function code)
+            let textContent = 'No content provided.';
+            if (typeof content === 'string') {
+                textContent = content.replace(/\n/g, '<br>');
+            } else if (Array.isArray(content)) {
+                textContent = `<ol class="list-decimal list-inside">${content.map(item => `<li>${item}</li>`).join('')}</ol>`;
+            } else if (typeof content === 'object' && content !== null) {
+                textContent = `<ol class="list-decimal list-inside">${Object.values(content).map(item => `<li>${item}</li>`).join('')}</ol>`;
+            } else if (content) {
+                textContent = String(content).replace(/\n/g, '<br>');
+            }
+            return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid"><h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="${icon}" class="text-${color}-500"></i><span class="ml-2">${title}</span></h3><div class="prose prose-sm max-w-none text-gray-600">${textContent}</div></div>`;
         }
+
         async function handleDownloadDoc(filename) {
-            // ... (existing function code)
+            let printableAreaId;
+            if (state.activeTab === 'lessonPlanner') printableAreaId = 'printable-plan';
+            else if (state.activeTab === 'reportWriter') printableAreaId = 'printable-report';
+            else if (state.activeTab === 'testCreator') printableAreaId = 'printable-test';
+            
+            if (!printableAreaId) return;
+
+            const content = document.getElementById(printableAreaId).innerHTML;
+            const blob = await htmlToDocx.asBlob(content, {
+                margins: { top: 720, right: 720, bottom: 720, left: 720 }
+            });
+            saveAs(blob, `${filename}.docx`);
         }
 
         // --- INITIAL RENDER ---
