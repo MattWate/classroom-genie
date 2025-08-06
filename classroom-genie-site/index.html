@@ -847,7 +847,20 @@
             } else if (Array.isArray(content)) {
                 textContent = `<ol class="list-decimal list-inside">${content.map(item => `<li>${item}</li>`).join('')}</ol>`;
             } else if (typeof content === 'object' && content !== null) {
-                textContent = `<ol class="list-decimal list-inside">${Object.values(content).map(item => `<li>${item}</li>`).join('')}</ol>`;
+                // Recursive function to handle nested objects and arrays
+                const formatObject = (obj) => {
+                    return `<ul class="list-disc list-inside ml-4">${Object.entries(obj).map(([key, value]) => `<li><strong>${key}:</strong> ${formatContent(value)}</li>`).join('')}</ul>`;
+                };
+                const formatArray = (arr) => {
+                    return `<ol class="list-decimal list-inside">${arr.map(item => `<li>${formatContent(item)}</li>`).join('')}</ol>`;
+                };
+                const formatContent = (item) => {
+                    if (typeof item === 'string') return item.replace(/\n/g, '<br>');
+                    if (Array.isArray(item)) return formatArray(item);
+                    if (typeof item === 'object' && item !== null) return formatObject(item);
+                    return String(item);
+                };
+                textContent = formatContent(content);
             } else if (content) {
                 textContent = String(content).replace(/\n/g, '<br>');
             }
