@@ -902,13 +902,21 @@
         }
 
         function createSectionHTML(icon, color, title, content) {
+            const cleanMarkdown = (text) => {
+                return String(text)
+                    .replace(/\*\*\*(.*?)\*\*\*/g, '<hr class="my-4 border-gray-200"><strong><em>$1</em></strong><hr class="my-4 border-gray-200">')
+                    .replace(/\*\*/g, '')
+                    .replace(/\*/g, '')
+                    .replace(/## /g, '<h3 class="text-md font-semibold mt-4">')
+                    .replace(/\n/g, '<br>');
+            };
+
             let textContent = 'No content provided.';
             if (typeof content === 'string') {
-                textContent = content.replace(/\n/g, '<br>');
+                textContent = cleanMarkdown(content);
             } else if (Array.isArray(content)) {
-                textContent = `<ol class="list-decimal list-inside">${content.map(item => `<li>${item}</li>`).join('')}</ol>`;
+                textContent = `<ol class="list-decimal list-inside">${content.map(item => `<li>${cleanMarkdown(item)}</li>`).join('')}</ol>`;
             } else if (typeof content === 'object' && content !== null) {
-                // Recursive function to handle nested objects and arrays
                 const formatObject = (obj) => {
                     return `<ul class="list-disc list-inside ml-4">${Object.entries(obj).map(([key, value]) => `<li><strong>${key}:</strong> ${formatContent(value)}</li>`).join('')}</ul>`;
                 };
@@ -916,17 +924,18 @@
                     return `<ol class="list-decimal list-inside">${arr.map(item => `<li>${formatContent(item)}</li>`).join('')}</ol>`;
                 };
                 const formatContent = (item) => {
-                    if (typeof item === 'string') return item.replace(/\n/g, '<br>');
+                    if (typeof item === 'string') return cleanMarkdown(item);
                     if (Array.isArray(item)) return formatArray(item);
                     if (typeof item === 'object' && item !== null) return formatObject(item);
-                    return String(item);
+                    return cleanMarkdown(String(item));
                 };
                 textContent = formatContent(content);
             } else if (content) {
-                textContent = String(content).replace(/\n/g, '<br>');
+                textContent = cleanMarkdown(String(content));
             }
             return `<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 break-inside-avoid"><h3 class="text-lg font-semibold text-gray-800 flex items-center mb-3"><i data-lucide="${icon}" class="text-${color}-500"></i><span class="ml-2">${title}</span></h3><div class="prose prose-sm max-w-none text-gray-600">${textContent}</div></div>`;
         }
+
 
         async function handleDownloadDoc(filename) {
             let printableAreaId;
